@@ -225,7 +225,7 @@ const InputBar: React.FC<InputBarProps> = ({ onSend, storageUsage, onFileUpload 
   const showStop = isRecording;
 
   return (
-    <div className="z-20 bg-tg-sidebar px-2 py-2 pb-safe flex items-center space-x-2 border-t border-tg-border/50 relative shrink-0">
+    <div className="z-20 bg-tg-sidebar px-2 py-2 pb-safe flex items-center space-x-2 border-t border-tg-border/50 relative shrink-0 w-full">
       
       <input type="file" ref={galleryInputRef} onChange={(e) => handleFileSelect(e, 'media')} className="hidden" accept="image/*,video/*" />
       <input type="file" ref={fileInputRef} onChange={(e) => handleFileSelect(e, 'file')} className="hidden" />
@@ -264,30 +264,30 @@ const InputBar: React.FC<InputBarProps> = ({ onSend, storageUsage, onFileUpload 
         </div>
       )}
 
-      <div className="flex-1 bg-tg-bg rounded-[16px] flex items-center px-3 py-1 space-x-2 transition-shadow focus-within:shadow-lg border border-transparent focus-within:border-tg-accent/20 h-[46px]">
+      <div className="flex-1 bg-tg-bg rounded-[16px] flex items-center px-3 py-1 space-x-2 transition-shadow focus-within:shadow-lg border border-transparent focus-within:border-tg-accent/20 h-[46px] min-w-0">
         {isRecording ? (
-          <div className="flex-1 flex items-center space-x-3 animate-fadeIn px-2">
-             <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
-             <span className="text-white font-mono font-medium text-lg">{formatDuration(recordingDuration)}</span>
-             <span className="text-tg-secondary text-sm ml-2">{t('recording') || 'Recording...'}</span>
+          <div className="flex-1 flex items-center space-x-3 animate-fadeIn px-2 min-w-0">
+             <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse shrink-0" />
+             <span className="text-white font-mono font-medium text-lg shrink-0">{formatDuration(recordingDuration)}</span>
+             <span className="text-tg-secondary text-sm ml-2 truncate">{t('recording') || 'Recording...'}</span>
           </div>
         ) : audioBlob ? (
-          <div className="flex-1 flex items-center justify-between animate-fadeIn px-2">
-              <div className="flex items-center space-x-3">
-                 <Mic size={20} className="text-tg-accent" />
-                 <span className="text-white font-medium text-sm">Voice ({formatDuration(recordingDuration)})</span>
+          <div className="flex-1 flex items-center justify-between animate-fadeIn px-2 min-w-0">
+              <div className="flex items-center space-x-3 min-w-0">
+                 <Mic size={20} className="text-tg-accent shrink-0" />
+                 <span className="text-white font-medium text-sm truncate">Voice ({formatDuration(recordingDuration)})</span>
               </div>
-              <button onClick={cancelRecording} className="p-1 hover:bg-white/10 rounded-full text-red-400 transition-colors">
+              <button onClick={cancelRecording} className="p-1 hover:bg-white/10 rounded-full text-red-400 transition-colors shrink-0">
                  <Trash2 size={20} />
               </button>
           </div>
         ) : (
           <>
-            <button onClick={() => setShowEmoji(!showEmoji)} className={`emoji-toggle-btn p-1 transition-colors hover:text-tg-accent ${showEmoji ? 'text-tg-accent' : 'text-tg-secondary'}`}>
+            <button onClick={() => setShowEmoji(!showEmoji)} className={`emoji-toggle-btn p-1 transition-colors hover:text-tg-accent shrink-0 ${showEmoji ? 'text-tg-accent' : 'text-tg-secondary'}`}>
               {showEmoji ? <Keyboard size={24} /> : <Smile size={24} />}
             </button>
-            <input type="text" placeholder={t('message')} value={text} onChange={(e) => setText(e.target.value)} onKeyDown={handleKeyDown} className="flex-1 bg-transparent text-white placeholder-tg-secondary focus:outline-none text-[16px] py-2" />
-            <button onClick={() => setShowAttach(!showAttach)} className={`attach-toggle-btn p-1 transition-colors hover:text-tg-accent transform duration-200 ${showAttach ? 'text-tg-accent rotate-45' : 'text-tg-secondary'}`}>
+            <input type="text" placeholder={t('message')} value={text} onChange={(e) => setText(e.target.value)} onKeyDown={handleKeyDown} className="flex-1 bg-transparent text-white placeholder-tg-secondary focus:outline-none text-[16px] py-2 min-w-0" />
+            <button onClick={() => setShowAttach(!showAttach)} className={`attach-toggle-btn p-1 transition-colors hover:text-tg-accent transform duration-200 shrink-0 ${showAttach ? 'text-tg-accent rotate-45' : 'text-tg-secondary'}`}>
               <Paperclip size={22} className={showAttach ? "" : "rotate-45"} />
             </button>
           </>

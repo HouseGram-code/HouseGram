@@ -68,9 +68,9 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
         }
     }
 
-    // FIX: Use null instead of undefined for Firestore compatibility
+    // STRICT FIX: Ensure NO field is undefined. Use null.
     const newMessageData = {
-      senderId: currentUser.id,
+      senderId: currentUser.id || 'unknown',
       text: (type === 'file' || type === 'audio') ? null : (cleanText || null),
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       timestampRaw: Date.now(),
@@ -100,7 +100,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full w-full bg-tg-bg relative overflow-hidden">
+    <div className="flex flex-col w-full bg-tg-bg relative overflow-hidden h-full">
       <div className="absolute inset-0 bg-tg-pattern bg-repeat opacity-[0.03] pointer-events-none" />
 
       {/* Mobile-optimized Header */}
@@ -173,12 +173,12 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
       </div>
 
       {isBlocked ? (
-        <div className="z-10 bg-tg-sidebar px-4 py-4 flex items-center justify-center space-x-2 border-t border-tg-border/50 text-red-400 font-medium pb-8">
+        <div className="z-10 bg-tg-sidebar px-4 py-4 flex items-center justify-center space-x-2 border-t border-tg-border/50 text-red-400 font-medium pb-safe">
           <Ban size={18} />
           <span>{t('userBlockedMsg')}</span>
         </div>
       ) : chat.isReadOnly ? (
-        <div className="z-10 bg-tg-sidebar px-4 py-3 flex items-center justify-center border-t border-tg-border/50 pb-6">
+        <div className="z-10 bg-tg-sidebar px-4 py-3 flex items-center justify-center border-t border-tg-border/50 pb-safe">
              <div className="flex items-center space-x-2 bg-tg-accent/10 px-4 py-1.5 rounded-full border border-tg-accent/20">
                 <BadgeCheck size={16} className="text-tg-accent" fill="#2AABEE" stroke="white" />
                 <span className="text-tg-accent font-bold text-xs uppercase tracking-wide">Official Channel</span>
