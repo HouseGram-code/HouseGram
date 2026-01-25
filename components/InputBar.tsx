@@ -6,7 +6,6 @@ import { useLanguage } from '../LanguageContext.tsx';
 import { Message } from '../types.ts';
 import { storage } from '../firebase.ts';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { MAX_STORAGE_BYTES } from '../constants.ts';
 
 interface InputBarProps {
   onSend: (text: string, type: Message['type'], mediaUrl?: string, meta?: string) => void;
@@ -226,23 +225,33 @@ const InputBar: React.FC<InputBarProps> = ({ onSend, storageUsage, onFileUpload 
   const showStop = isRecording;
 
   return (
-    <div className="z-10 bg-tg-sidebar px-2 py-2 flex items-center space-x-2 border-t border-tg-border/50 relative">
+    <div className="z-20 bg-tg-sidebar px-2 py-2 pb-safe flex items-center space-x-2 border-t border-tg-border/50 relative shrink-0">
       
       <input type="file" ref={galleryInputRef} onChange={(e) => handleFileSelect(e, 'media')} className="hidden" accept="image/*,video/*" />
       <input type="file" ref={fileInputRef} onChange={(e) => handleFileSelect(e, 'file')} className="hidden" />
       <input type="file" ref={musicInputRef} onChange={(e) => handleFileSelect(e, 'audio')} className="hidden" accept="audio/*" />
 
       {showEmoji && (
-        <div ref={pickerRef} className="absolute bottom-16 left-2 z-50 animate-form-entrance origin-bottom-left shadow-2xl rounded-2xl overflow-hidden">
-          <EmojiPicker onEmojiClick={onEmojiClick} theme={Theme.DARK} emojiStyle={EmojiStyle.APPLE} searchDisabled={false} width={350} height={450} lazyLoadEmojis={true} previewConfig={{ showPreview: false }} style={{ 
+        <div ref={pickerRef} className="absolute bottom-[60px] left-0 right-0 z-50 animate-form-entrance shadow-2xl overflow-hidden mx-auto w-full max-w-md px-2">
+          <EmojiPicker 
+            onEmojiClick={onEmojiClick} 
+            theme={Theme.DARK} 
+            emojiStyle={EmojiStyle.APPLE} 
+            searchDisabled={false} 
+            width="100%"
+            height={350} 
+            lazyLoadEmojis={true} 
+            previewConfig={{ showPreview: false }} 
+            style={{ 
               // @ts-ignore
-              '--epr-bg-color': '#17212B', '--epr-category-label-bg-color': '#17212B', '--epr-text-color': '#ffffff', '--epr-picker-border-color': '#0E1621', '--epr-search-input-bg-color': '#0E1621', '--epr-search-input-text-color': '#ffffff', '--epr-hover-bg-color': 'rgba(255,255,255,0.05)', '--epr-focus-bg-color': 'rgba(255,255,255,0.1)', border: '1px solid #0E1621' 
-          }} />
+              '--epr-bg-color': '#17212B', '--epr-category-label-bg-color': '#17212B', '--epr-text-color': '#ffffff', '--epr-picker-border-color': '#0E1621', '--epr-search-input-bg-color': '#0E1621', '--epr-search-input-text-color': '#ffffff', '--epr-hover-bg-color': 'rgba(255,255,255,0.05)', '--epr-focus-bg-color': 'rgba(255,255,255,0.1)', border: '1px solid #0E1621', borderRadius: '16px' 
+            }} 
+          />
         </div>
       )}
 
       {showAttach && (
-        <div ref={attachRef} className="absolute bottom-16 right-4 z-50 animate-form-entrance origin-bottom-right bg-[#17212B] border border-tg-border rounded-xl shadow-2xl overflow-hidden w-48 py-2">
+        <div ref={attachRef} className="absolute bottom-[60px] right-2 z-50 animate-form-entrance origin-bottom-right bg-[#17212B] border border-tg-border rounded-xl shadow-2xl overflow-hidden w-48 py-2">
           <button onClick={() => galleryInputRef.current?.click()} className="w-full px-4 py-3 flex items-center space-x-3 hover:bg-white/5 transition-colors">
             <div className="w-8 h-8 rounded-full bg-blue-500/20 text-blue-500 flex items-center justify-center"><Image size={18} /></div><span className="text-white font-medium">Photo or Video</span>
           </button>
@@ -255,18 +264,18 @@ const InputBar: React.FC<InputBarProps> = ({ onSend, storageUsage, onFileUpload 
         </div>
       )}
 
-      <div className="flex-1 bg-tg-bg rounded-full flex items-center px-4 py-2 space-x-3 transition-shadow focus-within:shadow-lg border border-transparent focus-within:border-tg-accent/20 h-[46px]">
+      <div className="flex-1 bg-tg-bg rounded-[16px] flex items-center px-3 py-1 space-x-2 transition-shadow focus-within:shadow-lg border border-transparent focus-within:border-tg-accent/20 h-[46px]">
         {isRecording ? (
-          <div className="flex-1 flex items-center space-x-3 animate-fadeIn">
+          <div className="flex-1 flex items-center space-x-3 animate-fadeIn px-2">
              <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
-             <span className="text-white font-mono font-medium">{formatDuration(recordingDuration)}</span>
+             <span className="text-white font-mono font-medium text-lg">{formatDuration(recordingDuration)}</span>
              <span className="text-tg-secondary text-sm ml-2">{t('recording') || 'Recording...'}</span>
           </div>
         ) : audioBlob ? (
-          <div className="flex-1 flex items-center justify-between animate-fadeIn">
+          <div className="flex-1 flex items-center justify-between animate-fadeIn px-2">
               <div className="flex items-center space-x-3">
                  <Mic size={20} className="text-tg-accent" />
-                 <span className="text-white font-medium">Voice Message ({formatDuration(recordingDuration)})</span>
+                 <span className="text-white font-medium text-sm">Voice ({formatDuration(recordingDuration)})</span>
               </div>
               <button onClick={cancelRecording} className="p-1 hover:bg-white/10 rounded-full text-red-400 transition-colors">
                  <Trash2 size={20} />
@@ -274,35 +283,35 @@ const InputBar: React.FC<InputBarProps> = ({ onSend, storageUsage, onFileUpload 
           </div>
         ) : (
           <>
-            <button onClick={() => setShowEmoji(!showEmoji)} className={`emoji-toggle-btn transition-colors hover:text-tg-accent ${showEmoji ? 'text-tg-accent' : 'text-tg-secondary'}`}>
+            <button onClick={() => setShowEmoji(!showEmoji)} className={`emoji-toggle-btn p-1 transition-colors hover:text-tg-accent ${showEmoji ? 'text-tg-accent' : 'text-tg-secondary'}`}>
               {showEmoji ? <Keyboard size={24} /> : <Smile size={24} />}
             </button>
-            <input type="text" placeholder={t('message')} value={text} onChange={(e) => setText(e.target.value)} onKeyDown={handleKeyDown} className="flex-1 bg-transparent text-white placeholder-tg-secondary focus:outline-none py-1.5" />
-            <button onClick={() => setShowAttach(!showAttach)} className={`attach-toggle-btn transition-colors hover:text-tg-accent transform duration-200 ${showAttach ? 'text-tg-accent rotate-45' : 'text-tg-secondary'}`}>
+            <input type="text" placeholder={t('message')} value={text} onChange={(e) => setText(e.target.value)} onKeyDown={handleKeyDown} className="flex-1 bg-transparent text-white placeholder-tg-secondary focus:outline-none text-[16px] py-2" />
+            <button onClick={() => setShowAttach(!showAttach)} className={`attach-toggle-btn p-1 transition-colors hover:text-tg-accent transform duration-200 ${showAttach ? 'text-tg-accent rotate-45' : 'text-tg-secondary'}`}>
               <Paperclip size={22} className={showAttach ? "" : "rotate-45"} />
             </button>
           </>
         )}
       </div>
 
-      <div className="relative w-12 h-12 flex items-center justify-center">
+      <div className="relative w-12 h-12 flex items-center justify-center flex-shrink-0">
          {isUploading ? (
              <div className="absolute inset-0 flex items-center justify-center">
                  <Loader2 className="animate-spin text-tg-accent" />
              </div>
          ) : (
             <>
-                <div className={`absolute transition-all duration-300 ${showSendText ? 'opacity-100 scale-100' : 'opacity-0 scale-50 pointer-events-none'}`}>
-                    <button onClick={handleSendText} className="w-12 h-12 bg-tg-accent rounded-full flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition-transform"><Send size={20} className="text-white ml-0.5 mt-0.5" fill="white" /></button>
+                <div className={`absolute transition-all duration-200 ${showSendText ? 'opacity-100 scale-100' : 'opacity-0 scale-50 pointer-events-none'}`}>
+                    <button onClick={handleSendText} className="w-12 h-12 bg-tg-accent rounded-full flex items-center justify-center shadow-md active:scale-95 transition-transform"><Send size={20} className="text-white ml-0.5 mt-0.5" fill="white" /></button>
                 </div>
-                <div className={`absolute transition-all duration-300 ${showSendVoice ? 'opacity-100 scale-100' : 'opacity-0 scale-50 pointer-events-none'}`}>
-                    <button onClick={handleSendVoice} className="w-12 h-12 bg-tg-accent rounded-full flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition-transform"><Send size={20} className="text-white ml-0.5 mt-0.5" fill="white" /></button>
+                <div className={`absolute transition-all duration-200 ${showSendVoice ? 'opacity-100 scale-100' : 'opacity-0 scale-50 pointer-events-none'}`}>
+                    <button onClick={handleSendVoice} className="w-12 h-12 bg-tg-accent rounded-full flex items-center justify-center shadow-md active:scale-95 transition-transform"><Send size={20} className="text-white ml-0.5 mt-0.5" fill="white" /></button>
                 </div>
-                <div className={`absolute transition-all duration-300 ${showStop ? 'opacity-100 scale-100' : 'opacity-0 scale-50 pointer-events-none'}`}>
-                    <button onClick={stopRecording} className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition-transform"><StopCircle size={24} className="text-white" fill="white" /></button>
+                <div className={`absolute transition-all duration-200 ${showStop ? 'opacity-100 scale-100' : 'opacity-0 scale-50 pointer-events-none'}`}>
+                    <button onClick={stopRecording} className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center shadow-md active:scale-95 transition-transform"><StopCircle size={24} className="text-white" fill="white" /></button>
                 </div>
-                <div className={`absolute transition-all duration-300 ${showMic ? 'opacity-100 scale-100' : 'opacity-0 scale-50 pointer-events-none'}`}>
-                    <button onClick={startRecording} className="w-12 h-12 hover:bg-tg-sidebar rounded-full flex items-center justify-center transition-colors"><Mic size={24} className="text-tg-secondary" /></button>
+                <div className={`absolute transition-all duration-200 ${showMic ? 'opacity-100 scale-100' : 'opacity-0 scale-50 pointer-events-none'}`}>
+                    <button onClick={startRecording} className="w-12 h-12 bg-[#232e3c] rounded-full flex items-center justify-center transition-colors active:scale-90"><Mic size={24} className="text-tg-accent" /></button>
                 </div>
             </>
          )}

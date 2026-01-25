@@ -205,11 +205,11 @@ const AppContent: React.FC = () => {
   }, [screen, currentUser]);
 
   if (isLoading) {
-      return <div className="h-screen w-full bg-tg-bg flex items-center justify-center text-white">Loading HouseGram...</div>;
+      return <div className="h-[100dvh] w-full bg-tg-bg flex items-center justify-center text-white">Loading HouseGram...</div>;
   }
 
   return (
-    <div className="flex h-screen w-full bg-tg-bg overflow-hidden relative">
+    <div className="flex w-full bg-tg-bg overflow-hidden relative" style={{ height: '100dvh' }}>
       {screen === AppScreen.AUTH && (
         <AuthScreen />
       )}
@@ -235,7 +235,7 @@ const AppContent: React.FC = () => {
         <ChatScreen 
           chat={activeChat}
           currentUser={currentUser} 
-          isBlocked={false} // Implement real blocking later
+          isBlocked={false} 
           onBack={handleBackToMain} 
           onOpenUserInfo={handleOpenUserInfo}
           storageUsage={storageStats.total}
