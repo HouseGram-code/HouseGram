@@ -1,0 +1,7 @@
+{
+  "name": "HouseGram",
+  "description": "A pixel-perfect messenger clone featuring dark theme, chat list, sidebar drawer, and a functional chat screen with voice message UI.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
