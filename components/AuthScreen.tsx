@@ -95,9 +95,9 @@ const AuthScreen: React.FC = () => {
         
         {/* Simple Plane Logo */}
         <div className="relative flex flex-col items-center animate-fly-in">
-            <div className="w-32 h-32 rounded-full bg-tg-accent flex items-center justify-center shadow-xl">
+            <div className="w-32 h-32 rounded-full bg-black flex items-center justify-center shadow-2xl shadow-red-500/10 border border-white/10">
             <div className="animate-plane-float">
-                <Send className="text-white w-16 h-16" fill="white" />
+                <Send className="text-red-600 w-16 h-16" fill="currentColor" />
             </div>
             </div>
         </div>
