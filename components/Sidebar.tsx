@@ -24,8 +24,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onOpenProfile, onOpe
   return (
     <>
       <div className={`fixed inset-0 bg-black/60 z-40 backdrop-blur-[1px] transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick={onClose} />
-      <div className={`fixed inset-y-0 left-0 w-[280px] bg-tg-sidebar z-50 transform transition-transform duration-300 ease-out ${isOpen ? 'translate-x-0' : '-translate-x-full'} border-r border-tg-border shadow-2xl`}>
-        <div onClick={onOpenProfile} className="relative h-44 bg-[#1c242f] overflow-hidden p-5 flex flex-col justify-end cursor-pointer group hover:bg-[#232c3a] transition-colors">
+      <div className={`fixed inset-y-0 left-0 w-[280px] bg-tg-sidebar z-50 transform transition-transform duration-300 ease-out ${isOpen ? 'translate-x-0' : '-translate-x-full'} border-r border-tg-border shadow-2xl flex flex-col h-full`}>
+        <div onClick={onOpenProfile} className="relative h-44 bg-[#1c242f] overflow-hidden p-5 flex flex-col justify-end cursor-pointer group hover:bg-[#232c3a] transition-colors shrink-0">
           <div className="absolute top-0 right-0 w-32 h-32 bg-tg-accent/5 rounded-full blur-3xl -mr-10 -mt-10" />
           <div className="relative z-10 space-y-3">
             <div className="relative inline-block">
@@ -47,7 +47,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onOpenProfile, onOpe
           </div>
         </div>
 
-        <div className="py-2 overflow-y-auto h-[calc(100vh-176px)] no-scrollbar">
+        <div className="flex-1 overflow-y-auto no-scrollbar py-2 pb-safe">
           <MenuItem icon={<UserIcon size={22} />} label={t('myProfile')} onClick={onOpenProfile} />
           
           {/* Secret Admin Button */}

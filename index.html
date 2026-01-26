@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0E1621">
     <title>HouseGram</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -75,11 +78,14 @@
         color: white;
         margin: 0;
         overflow: hidden;
+        -webkit-tap-highlight-color: transparent;
       }
       .no-scrollbar::-webkit-scrollbar { display: none; }
       .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       
-      .pb-safe { padding-bottom: env(safe-area-inset-bottom, 20px); }
+      /* Dynamic Safe Area Padding */
+      .pb-safe { padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 20px)); }
+      .pt-safe { padding-top: env(safe-area-inset-top, 20px); }
       
       /* 3D Dice Styles */
       .dice-scene {

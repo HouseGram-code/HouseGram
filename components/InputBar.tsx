@@ -225,14 +225,14 @@ const InputBar: React.FC<InputBarProps> = ({ onSend, storageUsage, onFileUpload 
   const showStop = isRecording;
 
   return (
-    <div className="z-20 bg-tg-sidebar px-2 py-2 pb-safe flex items-center space-x-2 border-t border-tg-border/50 relative shrink-0 w-full">
+    <div className="z-20 bg-tg-sidebar px-2 pt-2 pb-safe flex items-center space-x-2 border-t border-tg-border/50 relative shrink-0 w-full">
       
       <input type="file" ref={galleryInputRef} onChange={(e) => handleFileSelect(e, 'media')} className="hidden" accept="image/*,video/*" />
       <input type="file" ref={fileInputRef} onChange={(e) => handleFileSelect(e, 'file')} className="hidden" />
       <input type="file" ref={musicInputRef} onChange={(e) => handleFileSelect(e, 'audio')} className="hidden" accept="audio/*" />
 
       {showEmoji && (
-        <div ref={pickerRef} className="absolute bottom-[60px] left-0 right-0 z-50 animate-form-entrance shadow-2xl overflow-hidden mx-auto w-full max-w-md px-2">
+        <div ref={pickerRef} className="absolute bottom-[80px] left-0 right-0 z-50 animate-form-entrance shadow-2xl overflow-hidden mx-auto w-full max-w-md px-2">
           <EmojiPicker 
             onEmojiClick={onEmojiClick} 
             theme={Theme.DARK} 
@@ -251,7 +251,7 @@ const InputBar: React.FC<InputBarProps> = ({ onSend, storageUsage, onFileUpload 
       )}
 
       {showAttach && (
-        <div ref={attachRef} className="absolute bottom-[60px] right-2 z-50 animate-form-entrance origin-bottom-right bg-[#17212B] border border-tg-border rounded-xl shadow-2xl overflow-hidden w-48 py-2">
+        <div ref={attachRef} className="absolute bottom-[80px] right-2 z-50 animate-form-entrance origin-bottom-right bg-[#17212B] border border-tg-border rounded-xl shadow-2xl overflow-hidden w-48 py-2">
           <button onClick={() => galleryInputRef.current?.click()} className="w-full px-4 py-3 flex items-center space-x-3 hover:bg-white/5 transition-colors">
             <div className="w-8 h-8 rounded-full bg-blue-500/20 text-blue-500 flex items-center justify-center"><Image size={18} /></div><span className="text-white font-medium">Photo or Video</span>
           </button>

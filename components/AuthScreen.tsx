@@ -90,115 +90,118 @@ const AuthScreen: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center w-full max-w-lg mx-auto p-6 space-y-10 h-full overflow-hidden relative">
-      {/* Simple Plane Logo */}
-      <div className="relative flex flex-col items-center animate-fly-in">
-        <div className="w-32 h-32 rounded-full bg-tg-accent flex items-center justify-center shadow-xl">
-          <div className="animate-plane-float">
-            <Send className="text-white w-16 h-16" fill="white" />
-          </div>
-        </div>
-      </div>
-
-      {/* Form Content */}
-      <div className="w-full max-w-sm text-center space-y-6 animate-form-entrance">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold text-white tracking-tight">{t('appName')}</h1>
-          <p className="text-[15px] text-tg-secondary">
-            {isRegistering ? t('createAccount') : t('login')}
-          </p>
-        </div>
-
-        {error && (
-            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 flex items-center space-x-2 text-red-400 text-sm text-left animate-fadeIn">
-                <AlertCircle size={16} className="shrink-0" />
-                <span>{error}</span>
+    <div className="flex flex-col items-center w-full max-w-lg mx-auto p-6 h-full overflow-y-auto no-scrollbar relative pb-safe">
+      <div className="flex-1 flex flex-col items-center justify-center w-full space-y-10 min-h-[600px]">
+        
+        {/* Simple Plane Logo */}
+        <div className="relative flex flex-col items-center animate-fly-in">
+            <div className="w-32 h-32 rounded-full bg-tg-accent flex items-center justify-center shadow-xl">
+            <div className="animate-plane-float">
+                <Send className="text-white w-16 h-16" fill="white" />
             </div>
-        )}
+            </div>
+        </div>
 
-        <div className="w-full space-y-3">
-          {isRegistering && (
-            <>
-                <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <UserIcon size={20} className="text-tg-secondary group-focus-within:text-tg-accent transition-colors duration-300" />
-                    </div>
-                    <input
-                    type="text"
-                    placeholder={t('fullName')}
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="block w-full pl-12 pr-4 py-3.5 bg-tg-sidebar border-2 border-tg-border rounded-xl text-white placeholder-tg-secondary focus:outline-none focus:border-tg-accent transition-all duration-300"
-                    />
+        {/* Form Content */}
+        <div className="w-full max-w-sm text-center space-y-6 animate-form-entrance">
+            <div className="space-y-2">
+            <h1 className="text-3xl font-bold text-white tracking-tight">{t('appName')}</h1>
+            <p className="text-[15px] text-tg-secondary">
+                {isRegistering ? t('createAccount') : t('login')}
+            </p>
+            </div>
+
+            {error && (
+                <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 flex items-center space-x-2 text-red-400 text-sm text-left animate-fadeIn">
+                    <AlertCircle size={16} className="shrink-0" />
+                    <span>{error}</span>
                 </div>
-                <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <AtSign size={20} className="text-tg-secondary group-focus-within:text-tg-accent transition-colors duration-300" />
+            )}
+
+            <div className="w-full space-y-3">
+            {isRegistering && (
+                <>
+                    <div className="relative group">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <UserIcon size={20} className="text-tg-secondary group-focus-within:text-tg-accent transition-colors duration-300" />
+                        </div>
+                        <input
+                        type="text"
+                        placeholder={t('fullName')}
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="block w-full pl-12 pr-4 py-3.5 bg-tg-sidebar border-2 border-tg-border rounded-xl text-white placeholder-tg-secondary focus:outline-none focus:border-tg-accent transition-all duration-300 text-[16px]"
+                        />
                     </div>
-                    <input
-                    type="text"
-                    placeholder={t('username')}
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    className="block w-full pl-12 pr-4 py-3.5 bg-tg-sidebar border-2 border-tg-border rounded-xl text-white placeholder-tg-secondary focus:outline-none focus:border-tg-accent transition-all duration-300"
-                    />
+                    <div className="relative group">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <AtSign size={20} className="text-tg-secondary group-focus-within:text-tg-accent transition-colors duration-300" />
+                        </div>
+                        <input
+                        type="text"
+                        placeholder={t('username')}
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        className="block w-full pl-12 pr-4 py-3.5 bg-tg-sidebar border-2 border-tg-border rounded-xl text-white placeholder-tg-secondary focus:outline-none focus:border-tg-accent transition-all duration-300 text-[16px]"
+                        />
+                    </div>
+                </>
+            )}
+
+            <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Mail size={20} className="text-tg-secondary group-focus-within:text-tg-accent transition-colors duration-300" />
                 </div>
-            </>
-          )}
-
-          <div className="relative group">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <Mail size={20} className="text-tg-secondary group-focus-within:text-tg-accent transition-colors duration-300" />
+                <input
+                type="email"
+                placeholder={t('email')}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="block w-full pl-12 pr-4 py-3.5 bg-tg-sidebar border-2 border-tg-border rounded-xl text-white placeholder-tg-secondary focus:outline-none focus:border-tg-accent transition-all duration-300 text-[16px]"
+                />
             </div>
-            <input
-              type="email"
-              placeholder={t('email')}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="block w-full pl-12 pr-4 py-3.5 bg-tg-sidebar border-2 border-tg-border rounded-xl text-white placeholder-tg-secondary focus:outline-none focus:border-tg-accent transition-all duration-300"
-            />
-          </div>
 
-          <div className="relative group">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <Key size={20} className="text-tg-secondary group-focus-within:text-tg-accent transition-colors duration-300" />
+            <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Key size={20} className="text-tg-secondary group-focus-within:text-tg-accent transition-colors duration-300" />
+                </div>
+                <input
+                type="password"
+                placeholder={t('password')}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="block w-full pl-12 pr-4 py-3.5 bg-tg-sidebar border-2 border-tg-border rounded-xl text-white placeholder-tg-secondary focus:outline-none focus:border-tg-accent transition-all duration-300 text-[16px]"
+                />
             </div>
-            <input
-              type="password"
-              placeholder={t('password')}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="block w-full pl-12 pr-4 py-3.5 bg-tg-sidebar border-2 border-tg-border rounded-xl text-white placeholder-tg-secondary focus:outline-none focus:border-tg-accent transition-all duration-300"
-            />
-          </div>
-        </div>
+            </div>
 
-        <div className="pt-2">
-          <button
-            onClick={handleSubmit}
-            disabled={!isFormValid || loading}
-            className={`w-full py-4 rounded-xl font-bold text-lg transition-all duration-300 transform active:scale-95 flex items-center justify-center ${
-              isFormValid && !loading
-                ? 'bg-tg-accent text-white shadow-lg cursor-pointer' 
-                : 'bg-tg-sidebar text-tg-secondary opacity-50 cursor-not-allowed border border-tg-border'
-            }`}
-          >
-            {loading ? <Loader2 className="animate-spin" /> : (isRegistering ? t('createAccount') : t('continue'))}
-          </button>
-        </div>
+            <div className="pt-2">
+            <button
+                onClick={handleSubmit}
+                disabled={!isFormValid || loading}
+                className={`w-full py-4 rounded-xl font-bold text-lg transition-all duration-300 transform active:scale-95 flex items-center justify-center ${
+                isFormValid && !loading
+                    ? 'bg-tg-accent text-white shadow-lg cursor-pointer' 
+                    : 'bg-tg-sidebar text-tg-secondary opacity-50 cursor-not-allowed border border-tg-border'
+                }`}
+            >
+                {loading ? <Loader2 className="animate-spin" /> : (isRegistering ? t('createAccount') : t('continue'))}
+            </button>
+            </div>
 
-        <div className="flex flex-col items-center space-y-4">
-             <button 
-                onClick={() => { setIsRegistering(!isRegistering); setError(null); }}
-                className="text-tg-accent hover:underline text-sm font-medium"
-             >
-                {isRegistering ? t('haveAccount') : t('noAccount')} {isRegistering ? t('login') : t('signup')}
-             </button>
+            <div className="flex flex-col items-center space-y-4">
+                <button 
+                    onClick={() => { setIsRegistering(!isRegistering); setError(null); }}
+                    className="text-tg-accent hover:underline text-sm font-medium"
+                >
+                    {isRegistering ? t('haveAccount') : t('noAccount')} {isRegistering ? t('login') : t('signup')}
+                </button>
 
-             <div className="flex items-center justify-center space-x-2 text-sm text-tg-secondary">
-                <ShieldCheck size={16} className="text-tg-online" />
-                <p>Secure connection established</p>
-             </div>
+                <div className="flex items-center justify-center space-x-2 text-sm text-tg-secondary pb-4">
+                    <ShieldCheck size={16} className="text-tg-online" />
+                    <p>Secure connection established</p>
+                </div>
+            </div>
         </div>
       </div>
     </div>
