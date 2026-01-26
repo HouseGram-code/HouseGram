@@ -307,7 +307,10 @@ const ChatList: React.FC<ChatListProps> = ({
       </div>
 
       {!isSearching && (
-        <button onClick={() => setIsSearching(true)} className="absolute bottom-6 right-6 w-14 h-14 bg-tg-accent text-white rounded-full flex items-center justify-center shadow-[0_8px_24px_rgba(42,171,238,0.4)] hover:brightness-110 hover:-translate-y-1 active:scale-95 transition-all z-30 pb-safe">
+        <button 
+          onClick={() => setIsSearching(true)} 
+          className="absolute bottom-[calc(1.5rem+env(safe-area-inset-bottom))] right-6 w-14 h-14 bg-tg-accent text-white rounded-full flex items-center justify-center shadow-[0_8px_24px_rgba(42,171,238,0.4)] hover:brightness-110 hover:-translate-y-1 active:scale-95 transition-all z-30"
+        >
           <Pencil size={24} strokeWidth={2.5} />
         </button>
       )}
@@ -316,3 +319,4 @@ const ChatList: React.FC<ChatListProps> = ({
 };
 
 export default ChatList;
+    
