@@ -1,11 +1,13 @@
+
 import React, { useState, useRef } from 'react';
 import { 
   ArrowLeft, Info, AtSign, Mail, 
   MessageCircle, Ban, Trash2, ShieldCheck, BadgeCheck, ShieldAlert
 } from 'lucide-react';
-import { User } from '../types.ts';
+import { User, formatLastSeen } from '../types.ts';
 import { useLanguage } from '../LanguageContext.tsx';
 import { ME } from '../constants.ts';
+import { auth } from '../firebase.ts'; // Import auth to get current user ID if needed, but better to pass prop if available. 
 
 interface UserInfoScreenProps {
   user: User;
@@ -13,9 +15,10 @@ interface UserInfoScreenProps {
   onBack: () => void;
   onBlock: () => void;
   onDelete: () => void;
+  currentUser: User; // Added prop
 }
 
-const UserInfoScreen: React.FC<UserInfoScreenProps> = ({ user, isBlocked, onBack, onBlock, onDelete }) => {
+const UserInfoScreen: React.FC<UserInfoScreenProps> = ({ user, isBlocked, onBack, onBlock, onDelete, currentUser }) => {
   const { t } = useLanguage();
   const [isScrolled, setIsScrolled] = useState(false);
   const [modal, setModal] = useState<'block' | 'delete' | null>(null);
@@ -34,8 +37,7 @@ const UserInfoScreen: React.FC<UserInfoScreenProps> = ({ user, isBlocked, onBack
   const renderStatus = () => {
     if (isBlocked) return t('offline');
     if (user.status === 'typing') return t('typing');
-    if (user.status === 'online') return t('online');
-    return `${t('lastSeenAt')} ${user.lastSeen || '12:00'}`;
+    return formatLastSeen(user, t, currentUser);
   };
 
   // Function to mask email
@@ -48,6 +50,9 @@ const UserInfoScreen: React.FC<UserInfoScreenProps> = ({ user, isBlocked, onBack
     if (atIndex <= 2) return `***${email.slice(atIndex)}`;
     return `${email.slice(0, 2)}***${email.slice(atIndex)}`;
   };
+
+  const statusText = renderStatus();
+  const isOnline = statusText === t('online');
 
   return (
     <div className="flex flex-col h-full w-full bg-tg-bg overflow-hidden animate-fadeIn relative">
@@ -81,7 +86,7 @@ const UserInfoScreen: React.FC<UserInfoScreenProps> = ({ user, isBlocked, onBack
       )}
 
       {/* Dynamic Header */}
-      <div className={`fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 py-2 transition-all duration-300 ${isScrolled ? 'bg-tg-sidebar shadow-lg border-b border-tg-border' : 'bg-transparent'}`}>
+      <div className={`fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 pb-2 pt-safe transition-all duration-300 min-h-[60px] h-auto ${isScrolled ? 'bg-tg-sidebar shadow-lg border-b border-tg-border' : 'bg-transparent'}`}>
         <div className="flex items-center space-x-3">
           <button onClick={onBack} className="p-2 -ml-2 text-white hover:bg-white/10 rounded-full transition-colors active:scale-90">
             <ArrowLeft size={24} />
@@ -95,8 +100,8 @@ const UserInfoScreen: React.FC<UserInfoScreenProps> = ({ user, isBlocked, onBack
                 <BadgeCheck size={14} className="ml-1 text-blue-500" fill="#2AABEE" stroke="white" />
               ) : null}
             </span>
-            <span className="text-tg-accent text-[12px]">
-              {renderStatus()}
+            <span className={`${isOnline ? 'text-tg-online' : 'text-tg-secondary'} text-[12px]`}>
+              {statusText}
             </span>
           </div>
         </div>
@@ -108,7 +113,7 @@ const UserInfoScreen: React.FC<UserInfoScreenProps> = ({ user, isBlocked, onBack
         className="flex-1 overflow-y-auto no-scrollbar scroll-smooth"
       >
         {/* Profile Header Block */}
-        <div className="relative pt-16 pb-8 flex flex-col items-center bg-tg-sidebar shadow-md">
+        <div className="relative pt-24 pb-8 flex flex-col items-center bg-tg-sidebar shadow-md">
            <div className="relative group">
             <div className={`w-32 h-32 md:w-40 md:h-40 rounded-full flex items-center justify-center text-5xl font-bold text-white shadow-2xl overflow-hidden border-4 border-[#1c2733] transform transition-transform group-hover:scale-[1.02] ${!user.avatarUrl ? user.avatarColor : ''}`}>
               {user.avatarUrl ? (
@@ -121,7 +126,7 @@ const UserInfoScreen: React.FC<UserInfoScreenProps> = ({ user, isBlocked, onBack
                 user.name.charAt(0)
               )}
             </div>
-            {!isBlocked && user.status === 'online' && (
+            {!isBlocked && isOnline && (
               <div className="absolute bottom-2 right-2 w-6 h-6 bg-tg-online border-4 border-tg-sidebar rounded-full shadow-lg" />
             )}
             {isBlocked && (
@@ -139,8 +144,8 @@ const UserInfoScreen: React.FC<UserInfoScreenProps> = ({ user, isBlocked, onBack
                     </div>
                 )}
             </h2>
-            <p className={`font-medium mt-1 ${user.status === 'typing' ? 'text-tg-accent animate-pulse' : 'text-tg-secondary'}`}>
-              {renderStatus()}
+            <p className={`font-medium mt-1 ${isOnline ? 'text-tg-online' : 'text-tg-secondary'}`}>
+              {statusText}
             </p>
           </div>
 

@@ -93,7 +93,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
   return (
     <div className="flex flex-col h-full w-full bg-tg-bg overflow-hidden animate-fadeIn relative">
-      <div className={`z-20 bg-tg-sidebar px-4 py-2 flex items-center justify-between border-b transition-all duration-300 ${isScrolled ? 'border-tg-border shadow-lg' : 'border-transparent'}`}>
+      <div className={`z-20 bg-tg-sidebar px-4 pb-2 pt-safe flex items-center justify-between border-b transition-all duration-300 min-h-[60px] h-auto ${isScrolled ? 'border-tg-border shadow-lg' : 'border-transparent'}`}>
         <div className="flex items-center space-x-3">
           <button onClick={onBack} className="p-2 -ml-2 text-white hover:bg-white/5 rounded-full transition-colors active:scale-90">
             <ArrowLeft size={24} />
@@ -266,7 +266,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
       {showLanguagePicker && (
         <div className="fixed inset-0 z-50 flex flex-col bg-tg-bg animate-fadeIn">
-          <div className="px-4 py-3 flex items-center bg-tg-sidebar border-b border-tg-border shadow-md">
+          <div className="px-4 py-3 pt-safe flex items-center bg-tg-sidebar border-b border-tg-border shadow-md min-h-[60px]">
             <button onClick={() => setShowLanguagePicker(false)} className="p-2 -ml-2 text-white hover:bg-white/5 rounded-full transition-colors">
               <ArrowLeft size={24} />
             </button>

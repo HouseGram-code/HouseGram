@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Lock, Key, Mail, Check, AlertCircle, ChevronRight, Delete } from 'lucide-react';
+import { ArrowLeft, Lock, Key, Mail, Check, AlertCircle, ChevronRight, Delete, Eye, EyeOff, Clock } from 'lucide-react';
 import { useLanguage } from '../LanguageContext.tsx';
+import { User } from '../types.ts';
 
 interface PrivacyScreenProps {
   onBack: () => void;
@@ -9,12 +10,14 @@ interface PrivacyScreenProps {
   setPasscode: (code: string | null) => void;
   recoveryEmail: string | null;
   setRecoveryEmail: (email: string | null) => void;
+  user: User;
+  onUpdateUser: (u: User) => void;
 }
 
-type Mode = 'menu' | 'passcode_create' | 'passcode_confirm' | 'email_input';
+type Mode = 'menu' | 'passcode_create' | 'passcode_confirm' | 'email_input' | 'last_seen_settings';
 
 const PrivacyScreen: React.FC<PrivacyScreenProps> = ({ 
-  onBack, passcode, setPasscode, recoveryEmail, setRecoveryEmail 
+  onBack, passcode, setPasscode, recoveryEmail, setRecoveryEmail, user, onUpdateUser 
 }) => {
   const { t } = useLanguage();
   const [mode, setMode] = useState<Mode>('menu');
@@ -22,6 +25,14 @@ const PrivacyScreen: React.FC<PrivacyScreenProps> = ({
   const [confirmCode, setConfirmCode] = useState('');
   const [emailInput, setEmailInput] = useState(recoveryEmail || '');
   const [error, setError] = useState<string | null>(null);
+
+  // Initialize privacy setting from user object, default to 'everybody'
+  const [privacySetting, setPrivacySetting] = useState<'everybody' | 'nobody'>(user.lastSeenPrivacy || 'everybody');
+
+  const handleUpdatePrivacy = (newSetting: 'everybody' | 'nobody') => {
+      setPrivacySetting(newSetting);
+      onUpdateUser({ ...user, lastSeenPrivacy: newSetting });
+  };
 
   // Reset inputs when mode changes
   useEffect(() => {
@@ -189,6 +200,39 @@ const PrivacyScreen: React.FC<PrivacyScreenProps> = ({
     );
   }
 
+  if (mode === 'last_seen_settings') {
+    return (
+      <div className="flex flex-col h-full bg-tg-bg relative animate-fadeIn">
+        <div className="bg-tg-sidebar px-4 py-3 flex items-center border-b border-tg-border">
+          <button onClick={() => setMode('menu')} className="p-2 -ml-2 text-white hover:bg-white/5 rounded-full transition-colors">
+            <ArrowLeft size={24} />
+          </button>
+          <span className="text-white font-bold text-xl ml-4">{t('lastSeenTitle')}</span>
+        </div>
+
+        <div className="flex-1 p-0 overflow-y-auto">
+             <div className="px-5 py-2 mt-4 text-xs font-bold text-tg-secondary uppercase tracking-widest">{t('whoCanSee')}</div>
+             
+             <div className="bg-tg-sidebar border-y border-tg-border">
+                <div onClick={() => handleUpdatePrivacy('everybody')} className="px-5 py-4 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-colors">
+                   <span className="text-white font-medium">{t('everybody')}</span>
+                   {privacySetting === 'everybody' && <Check size={20} className="text-tg-accent" />}
+                </div>
+                <div className="border-b border-tg-border ml-5" />
+                <div onClick={() => handleUpdatePrivacy('nobody')} className="px-5 py-4 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-colors">
+                   <span className="text-white font-medium">{t('nobody')}</span>
+                   {privacySetting === 'nobody' && <Check size={20} className="text-tg-accent" />}
+                </div>
+             </div>
+
+             <div className="px-5 py-3 text-sm text-tg-secondary leading-relaxed">
+                {t('lastSeenDesc')}
+             </div>
+        </div>
+      </div>
+    );
+  }
+
   // MAIN MENU
   return (
     <div className="flex flex-col h-full bg-tg-bg animate-fadeIn">
@@ -201,7 +245,32 @@ const PrivacyScreen: React.FC<PrivacyScreenProps> = ({
 
       <div className="flex-1 overflow-y-auto pt-2">
         {/* Header Section */}
-        <div className="px-5 py-2 text-xs font-bold text-tg-accent uppercase tracking-widest">{t('security')}</div>
+        <div className="px-5 py-2 text-xs font-bold text-tg-accent uppercase tracking-widest">{t('privacy')}</div>
+
+        <div className="bg-tg-sidebar border-y border-tg-border">
+           {/* Last Seen Menu */}
+           <div 
+             onClick={() => setMode('last_seen_settings')}
+             className="px-5 py-3.5 flex items-center space-x-5 hover:bg-white/5 cursor-pointer transition-colors group"
+           >
+              <div className="text-tg-secondary group-hover:text-tg-accent transition-colors">
+                  <Clock size={22} />
+              </div>
+              <div className="flex-1 flex justify-between items-center">
+                  <span className="text-white text-[16px]">{t('lastSeenTitle')}</span>
+                  <div className="flex items-center space-x-2">
+                      <span className="text-sm font-medium text-white/50">
+                          {privacySetting === 'everybody' ? t('everybody') : t('nobody')}
+                      </span>
+                      <ChevronRight size={16} className="text-tg-secondary/50" />
+                  </div>
+              </div>
+           </div>
+        </div>
+
+
+        {/* Security Section */}
+        <div className="px-5 py-2 mt-4 text-xs font-bold text-tg-accent uppercase tracking-widest">{t('security')}</div>
         
         {/* Passcode Item */}
         <div className="bg-tg-sidebar border-y border-tg-border">

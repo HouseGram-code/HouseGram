@@ -1,10 +1,13 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ArrowLeft, ShieldAlert, Users, Activity, Terminal, 
-  Search, Lock, Unlock, RefreshCw, BarChart2, HardDrive
+  Search, Lock, Unlock, RefreshCw, BarChart2, HardDrive,
+  Snowflake
 } from 'lucide-react';
 import { User } from '../types.ts';
+import { db } from '../firebase.ts';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 
 interface AdminPanelProps {
   onBack: () => void;
@@ -19,6 +22,24 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'logs'>('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
+  const [snowEnabled, setSnowEnabled] = useState(false);
+
+  // Listen to global settings
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'system', 'settings'), (doc) => {
+        if (doc.exists()) {
+            setSnowEnabled(doc.data()?.snowEnabled || false);
+        }
+    });
+    return () => unsub();
+  }, []);
+
+  const toggleSnow = async () => {
+      const newState = !snowEnabled;
+      // Optimistic update
+      setSnowEnabled(newState);
+      await setDoc(doc(db, 'system', 'settings'), { snowEnabled: newState }, { merge: true });
+  };
 
   const filteredUsers = users.filter(u => 
     u.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -66,6 +87,28 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
             
             {activeTab === 'dashboard' && (
                 <div className="space-y-6 animate-fadeIn">
+                    {/* Control Center */}
+                    <div className="bg-white/5 border border-white/10 rounded-lg p-6">
+                        <h3 className="text-lg font-bold mb-4 flex items-center text-white"><Activity className="mr-2 text-blue-500" /> Global Effects</h3>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                                <div className={`p-2 rounded-lg ${snowEnabled ? 'bg-blue-500/20 text-blue-400' : 'bg-white/5 text-gray-500'}`}>
+                                    <Snowflake size={24} />
+                                </div>
+                                <div>
+                                    <p className="font-bold">Winter Protocol</p>
+                                    <p className="text-sm text-gray-400">Enable falling snow for all connected clients.</p>
+                                </div>
+                            </div>
+                            <button 
+                                onClick={toggleSnow}
+                                className={`px-4 py-2 rounded font-bold text-sm transition-all ${snowEnabled ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_15px_rgba(37,99,235,0.5)]' : 'bg-white/10 hover:bg-white/20 text-gray-400'}`}
+                            >
+                                {snowEnabled ? 'ENABLED' : 'DISABLED'}
+                            </button>
+                        </div>
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <StatCard label="Total Users" value={users.length} icon={<Users className="text-blue-500" />} />
                         <StatCard label="Banned Users" value={bannedUserIds.size} icon={<Lock className="text-red-500" />} />
@@ -80,15 +123,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                         <div className="flex justify-between mt-2 text-sm text-gray-400">
                             <span>1.4 TB Used</span>
                             <span>4.0 TB Total</span>
-                        </div>
-                    </div>
-                    
-                    <div className="bg-white/5 border border-white/10 rounded-lg p-6">
-                        <h3 className="text-lg font-bold mb-4 flex items-center"><BarChart2 className="mr-2 text-yellow-500" /> Traffic Spike</h3>
-                        <div className="h-40 flex items-end space-x-2">
-                            {[40, 60, 45, 70, 30, 80, 50, 90, 65, 40, 55, 75].map((h, i) => (
-                                <div key={i} className="flex-1 bg-yellow-500/50 hover:bg-yellow-500 transition-colors rounded-t" style={{ height: `${h}%` }} />
-                            ))}
                         </div>
                     </div>
                 </div>
@@ -144,12 +178,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                     <p className="mb-1 opacity-70">[SYSTEM] Connection established to Mesh Network.</p>
                     <p className="mb-1 opacity-70">[AUTH] Admin user 'goh' authenticated via secure channel.</p>
                     <p className="mb-1 text-yellow-500">[WARN] High latency detected on Node #442.</p>
+                    {snowEnabled && <p className="mb-1 text-blue-400">[EFFECT] Winter Protocol Active. Global snowfall deployed.</p>}
                     <p className="mb-1 opacity-70">[INFO] User database synced. {users.length} records loaded.</p>
-                    <p className="mb-1 opacity-70">[INFO] Storage integrity check passed.</p>
-                    <p className="mb-1 text-blue-400">[NET] Incoming packet stream: OK.</p>
-                    {Array.from(bannedUserIds).map(id => (
-                        <p key={id} className="mb-1 text-red-500">[ACTION] Ban enforcement active for user_id: {id}</p>
-                    ))}
                     <div className="animate-pulse mt-2">_</div>
                 </div>
             )}

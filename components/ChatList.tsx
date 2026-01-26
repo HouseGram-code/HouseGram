@@ -79,12 +79,12 @@ const ChatList: React.FC<ChatListProps> = ({
         lastMessage: {
             id: 'intro',
             senderId: NEWS_BOT_USER.id,
-            text: 'Welcome to HouseGram! 👋',
+            text: 'HouseGram updated to v0.01.1',
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             isRead: false,
             type: 'text'
         },
-        unreadCount: 1,
+        unreadCount: 3,
         type: 'channel',
         isReadOnly: true
     };
@@ -136,60 +136,43 @@ const ChatList: React.FC<ChatListProps> = ({
                 isReadOnly: true,
                 updatedAt: Date.now(),
                 lastMessage: {
-                    text: 'Interactive Welcome Demo',
+                    text: 'HouseGram updated to v0.01.1',
                     timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                     senderId: NEWS_BOT_USER.id,
                     type: 'text'
                 }
             });
 
-            // 1. High-Impact Welcome
+            // Message 1: Update & Changelog
             await addDoc(collection(db, "chats", newChatRef.id, "messages"), {
                 senderId: NEWS_BOT_USER.id,
-                text: '👋', // Will trigger Big Emoji animation
-                timestamp: new Date(Date.now() - 10000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                timestampRaw: Date.now() - 10000,
+                text: '🚀 **HouseGram v0.01.1**\n\nWe have fixed minor bugs and improved overall stability. The app is now smoother and more reliable than ever.\n\nEnjoy the update!',
+                timestamp: new Date(Date.now() - 120000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                timestampRaw: Date.now() - 120000,
                 isRead: true,
                 type: 'text'
             });
 
+             // Message 2: Scheduling Demo (Video)
             await addDoc(collection(db, "chats", newChatRef.id, "messages"), {
                 senderId: NEWS_BOT_USER.id,
-                text: 'Welcome to **HouseGram News**!\n\nYou have just entered the world\'s most beautiful and fastest messaging platform. Let us show you around!',
-                timestamp: new Date(Date.now() - 8000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                timestampRaw: Date.now() - 8000,
+                text: '📅 **Schedule Messages**\n\nPlan your messages perfectly. You can now schedule messages to be sent at a specific time.\n\n**How to use:**\n1. Type your message.\n2. **Long press** the Send button.\n3. Select "Schedule Message" and pick a date.\n\nTry it out today!',
+                mediaUrl: 'https://assets.mixkit.co/videos/preview/mixkit-hands-of-a-man-typing-on-a-smartphone-1680-large.mp4',
+                timestamp: new Date(Date.now() - 60000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                timestampRaw: Date.now() - 60000,
                 isRead: true,
-                type: 'text'
+                type: 'video'
             });
 
-             // 2. Structured Usage Guide
-            await addDoc(collection(db, "chats", newChatRef.id, "messages"), {
-                senderId: NEWS_BOT_USER.id,
-                text: '🚀 **Mastering HouseGram**\n\n🔹 **Start Chatting**\nTap the **Pencil icon** ✏️ in the main list to find friends by name or username.\n\n🔹 **Voice Messages**\nTap the **Microphone** 🎤 to record. Use **Stop** to review or **Trash** to cancel.\n\n🔹 **Media & Files**\nSend anything! High-quality photos, videos, and music are supported via the **Paperclip icon** 📎.\n\n🔹 **Personalize**\nGo to **Settings** ⚙️ to set a custom profile video, bio, or change your theme language.',
-                timestamp: new Date(Date.now() - 5000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                timestampRaw: Date.now() - 5000,
-                isRead: true,
-                type: 'text'
-            });
-
-             // 3. Animation & Interactive Demo
+             // Message 3: Last Seen Privacy Demo (Video)
              await addDoc(collection(db, "chats", newChatRef.id, "messages"), {
                 senderId: NEWS_BOT_USER.id,
-                text: 'HouseGram brings messages to life with **Interactive Animations**. \n\n**Try it yourself:**\nSend a 🎲, 🏀, or 🎯 emoji to play! \n\n*Tap the basketball below to see a swish!*',
-                timestamp: new Date(Date.now() - 2000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                timestampRaw: Date.now() - 2000,
-                isRead: true,
-                type: 'text'
-            });
-
-             await addDoc(collection(db, "chats", newChatRef.id, "messages"), {
-                senderId: NEWS_BOT_USER.id,
-                text: '🏀',
+                text: '👀 **Last Seen & Online Privacy**\n\nYou now have granular control over who sees your status. \n\nWe adhere to the **Reciprocity Rule**: if you hide your Last Seen time from others (by selecting "Nobody"), you will not be able to see their Last Seen time either.\n\nGo to **Settings > Privacy** to configure this.',
+                mediaUrl: 'https://assets.mixkit.co/videos/preview/mixkit-woman-scrolling-on-smartphone-in-the-dark-1686-large.mp4',
                 timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 timestampRaw: Date.now(),
                 isRead: true,
-                type: 'text',
-                interactiveEmoji: { type: 'basketball', value: 5 }
+                type: 'video'
             });
 
             const realChat: Chat = {
@@ -244,7 +227,7 @@ const ChatList: React.FC<ChatListProps> = ({
 
   return (
     <div className="flex flex-col h-full bg-tg-bg overflow-hidden">
-      <div className="px-4 py-2.5 bg-tg-sidebar flex items-center justify-between shadow-sm z-20 border-b border-white/5 h-[60px]">
+      <div className="px-4 pb-2.5 pt-safe bg-tg-sidebar flex items-center justify-between shadow-sm z-20 border-b border-white/5 min-h-[60px] h-auto">
         {!isSearching ? (
           <>
             <div className="flex items-center space-x-5">
@@ -293,6 +276,7 @@ const ChatList: React.FC<ChatListProps> = ({
                             key={user.id} 
                             chat={{ id: 'temp', user, lastMessage: {id:'', senderId:'', timestamp:'', isRead:true, type:'text'}, unreadCount:0, type:'private'}} 
                             onClick={() => handleUserClick(user)} 
+                            currentUser={currentUser}
                          />
                      ))}
                    </>
@@ -316,14 +300,14 @@ const ChatList: React.FC<ChatListProps> = ({
                 </div>
             ) : (
                 displayChats.map((chat) => (
-                    <ChatItem key={chat.id} chat={chat} onClick={() => handleChatClick(chat)} />
+                    <ChatItem key={chat.id} chat={chat} onClick={() => handleChatClick(chat)} currentUser={currentUser} />
                 ))
             )
         )}
       </div>
 
       {!isSearching && (
-        <button onClick={() => setIsSearching(true)} className="absolute bottom-6 right-6 w-14 h-14 bg-tg-accent text-white rounded-full flex items-center justify-center shadow-[0_8px_24px_rgba(42,171,238,0.4)] hover:brightness-110 hover:-translate-y-1 active:scale-95 transition-all z-30">
+        <button onClick={() => setIsSearching(true)} className="absolute bottom-6 right-6 w-14 h-14 bg-tg-accent text-white rounded-full flex items-center justify-center shadow-[0_8px_24px_rgba(42,171,238,0.4)] hover:brightness-110 hover:-translate-y-1 active:scale-95 transition-all z-30 pb-safe">
           <Pencil size={24} strokeWidth={2.5} />
         </button>
       )}

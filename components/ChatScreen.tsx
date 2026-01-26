@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, MessageCircle, Ban, Megaphone, BadgeCheck, ShieldCheck } from 'lucide-react';
-import { Chat, Message, User } from '../types.ts';
+import { Chat, Message, User, formatLastSeen } from '../types.ts';
 import MessageBubble from './MessageBubble.tsx';
 import VoiceMessage from './VoiceMessage.tsx';
 import InputBar from './InputBar.tsx';
@@ -24,15 +24,30 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
 }) => {
   const { t } = useLanguage();
   const [messages, setMessages] = useState<Message[]>([]);
+  const [liveChatUser, setLiveChatUser] = useState<User>(chat.user);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [sending, setSending] = useState(false);
+
+  // Subscribe to Live User Data (for Status/Heartbeat)
+  useEffect(() => {
+    if (!chat.user.id || chat.user.id === 'news-bot') return;
+
+    const userRef = doc(db, "users", chat.user.id);
+    const unsubscribe = onSnapshot(userRef, (docSnap) => {
+        if (docSnap.exists()) {
+            setLiveChatUser({ ...docSnap.data(), id: docSnap.id } as User);
+        }
+    });
+
+    return () => unsubscribe();
+  }, [chat.user.id]);
 
   // Subscribe to messages subcollection
   useEffect(() => {
     if (!chat.id || chat.id === 'news-placeholder') return;
     
     const msgsRef = collection(db, "chats", chat.id, "messages");
-    const q = query(msgsRef, orderBy("timestamp", "asc"));
+    const q = query(msgsRef, orderBy("timestampRaw", "asc")); // Changed to sort by timestampRaw for better ordering including future dates
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
         const loadedMsgs = snapshot.docs.map(d => ({
@@ -52,7 +67,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
     return () => unsubscribe();
   }, [chat.id]);
 
-  const handleSendMessage = async (text: string, type: Message['type'], mediaUrl?: string, meta?: string) => {
+  const handleSendMessage = async (text: string, type: Message['type'], mediaUrl?: string, meta?: string, scheduledTime?: number) => {
     if (isBlocked || chat.isReadOnly || sending) return;
     
     let interactiveEmoji: Message['interactiveEmoji'] | undefined;
@@ -69,11 +84,14 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
     }
 
     // STRICT FIX: Ensure NO field is undefined. Use null.
+    // If scheduledTime is present, use it as timestampRaw so it sorts to the future
+    const tsRaw = scheduledTime || Date.now();
+    
     const newMessageData = {
       senderId: currentUser.id || 'unknown',
       text: (type === 'file' || type === 'audio') ? null : (cleanText || null),
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      timestampRaw: Date.now(),
+      timestamp: new Date(tsRaw).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      timestampRaw: tsRaw,
       isRead: false,
       type: type,
       audioUrl: (type === 'voice' || type === 'audio') ? (mediaUrl || null) : null,
@@ -81,61 +99,67 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
       mediaUrl: (type === 'image' || type === 'video' || type === 'file') ? (mediaUrl || null) : null,
       mediaSize: (type === 'file' || type === 'video' || type === 'image') ? (meta || null) : null,
       mediaName: (type === 'file' || type === 'audio') ? (text || null) : null,
-      interactiveEmoji: interactiveEmoji || null
+      interactiveEmoji: interactiveEmoji || null,
+      scheduledTimestamp: scheduledTime || null
     };
 
     try {
         // Add message to subcollection
         await addDoc(collection(db, "chats", chat.id, "messages"), newMessageData);
         
-        // Update last message in chat doc
-        await updateDoc(doc(db, "chats", chat.id), {
-            lastMessage: newMessageData,
-            updatedAt: Date.now()
-        });
+        // Update last message in chat doc only if NOT scheduled for later
+        if (!scheduledTime) {
+            await updateDoc(doc(db, "chats", chat.id), {
+                lastMessage: newMessageData,
+                updatedAt: Date.now()
+            });
+        }
 
     } catch (e) {
         console.error("Error sending message", e);
     }
   };
 
+  const statusText = chat.isReadOnly ? 'service notifications' : formatLastSeen(liveChatUser, t, currentUser);
+  const isOnline = statusText === t('online');
+
   return (
     <div className="flex flex-col w-full bg-tg-bg relative overflow-hidden h-full">
       <div className="absolute inset-0 bg-tg-pattern bg-repeat opacity-[0.03] pointer-events-none" />
 
-      {/* Mobile-optimized Header */}
-      <div className="z-10 bg-tg-sidebar px-2 py-2 flex items-center justify-between border-b border-tg-border/50 shadow-md h-[60px] shrink-0">
+      {/* Mobile-optimized Header with Safe Area Top Padding */}
+      <div className="z-10 bg-tg-sidebar px-2 pb-2 pt-safe flex items-center justify-between border-b border-tg-border/50 shadow-md min-h-[60px] h-auto shrink-0">
         <div className="flex items-center w-full overflow-hidden">
           <button onClick={onBack} className="p-3 mr-1 text-white hover:bg-white/5 rounded-full transition-colors flex-shrink-0 active:scale-95">
             <ArrowLeft size={22} />
           </button>
           
           <div 
-            onClick={() => onOpenUserInfo(chat.user)} 
+            onClick={() => onOpenUserInfo(liveChatUser)} 
             className="flex items-center flex-1 cursor-pointer overflow-hidden group py-1 active:opacity-70 transition-opacity"
           >
-            <div className={`w-10 h-10 rounded-full flex-shrink-0 ${chat.user.avatarColor} flex items-center justify-center font-bold text-white shadow-sm border border-white/5 relative overflow-hidden mr-3`}>
-              {chat.user.avatarUrl ? (
-                 chat.user.isVideoAvatar ? (
-                    <video src={chat.user.avatarUrl} autoPlay loop muted playsInline className="w-full h-full object-cover" />
+            <div className={`w-10 h-10 rounded-full flex-shrink-0 ${liveChatUser.avatarColor} flex items-center justify-center font-bold text-white shadow-sm border border-white/5 relative overflow-hidden mr-3`}>
+              {liveChatUser.avatarUrl ? (
+                 liveChatUser.isVideoAvatar ? (
+                    <video src={liveChatUser.avatarUrl} autoPlay loop muted playsInline className="w-full h-full object-cover" />
                  ) : (
-                    <img src={chat.user.avatarUrl} alt="" className="w-full h-full object-cover" />
+                    <img src={liveChatUser.avatarUrl} alt="" className="w-full h-full object-cover" />
                  )
               ) : (
-                chat.user.name.charAt(0)
+                liveChatUser.name.charAt(0)
               )}
             </div>
             <div className="flex flex-col overflow-hidden justify-center">
               <span className="text-white font-bold text-[16px] leading-tight truncate flex items-center">
-                {chat.user.name}
-                {chat.user.isAdmin ? (
+                {liveChatUser.name}
+                {liveChatUser.isAdmin ? (
                    <ShieldCheck size={14} className="ml-1 text-amber-500 shrink-0" fill="currentColor" stroke="black" strokeWidth={1} />
-                ) : chat.isReadOnly || chat.user.isOfficial ? (
+                ) : chat.isReadOnly || liveChatUser.isOfficial ? (
                    <BadgeCheck size={14} className="ml-1 text-tg-accent shrink-0" fill="#2AABEE" stroke="white" />
                 ) : null}
               </span>
-              <span className="text-[13px] truncate text-tg-online opacity-80 leading-tight">
-                {chat.isReadOnly ? 'service notifications' : t('online')}
+              <span className={`text-[13px] truncate leading-tight ${isOnline ? 'text-tg-online' : 'text-tg-secondary'}`}>
+                {statusText}
               </span>
             </div>
           </div>

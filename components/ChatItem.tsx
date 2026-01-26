@@ -1,14 +1,36 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Check, CheckCheck, Mic, ShieldCheck, BadgeCheck } from 'lucide-react';
-import { Chat } from '../types.ts';
+import { Chat, isUserOnline, User } from '../types.ts';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '../firebase.ts';
 
 interface ChatItemProps {
   chat: Chat;
   onClick: () => void;
+  currentUser?: User; // Added prop
 }
 
-const ChatItem: React.FC<ChatItemProps> = ({ chat, onClick }) => {
+const ChatItem: React.FC<ChatItemProps> = ({ chat, onClick, currentUser }) => {
+  // Use local state to track the live user object, initialized with the passed prop
+  const [liveUser, setLiveUser] = useState<User>(chat.user);
+
+  // Subscribe to the specific user's document to get real-time status/heartbeat updates
+  useEffect(() => {
+    if (!chat.user.id || chat.user.id === 'news-bot') return;
+
+    const userRef = doc(db, "users", chat.user.id);
+    const unsubscribe = onSnapshot(userRef, (docSnap) => {
+        if (docSnap.exists()) {
+            setLiveUser({ ...docSnap.data(), id: docSnap.id } as User);
+        }
+    });
+
+    return () => unsubscribe();
+  }, [chat.user.id]);
+
+  const isOnline = isUserOnline(liveUser, currentUser);
+
   return (
     <div 
       onClick={onClick}
@@ -16,18 +38,18 @@ const ChatItem: React.FC<ChatItemProps> = ({ chat, onClick }) => {
     >
       {/* Avatar with Glowy Online Indicator */}
       <div className="relative flex-shrink-0">
-        <div className={`w-[54px] h-[54px] rounded-full ${chat.user.avatarColor} flex items-center justify-center text-xl font-bold text-white shadow-md transform group-hover:scale-[1.03] transition-transform duration-300 overflow-hidden`}>
-          {chat.user.avatarUrl ? (
-             chat.user.isVideoAvatar ? (
-                <video src={chat.user.avatarUrl} autoPlay loop muted playsInline className="w-full h-full object-cover" />
+        <div className={`w-[54px] h-[54px] rounded-full ${liveUser.avatarColor} flex items-center justify-center text-xl font-bold text-white shadow-md transform group-hover:scale-[1.03] transition-transform duration-300 overflow-hidden`}>
+          {liveUser.avatarUrl ? (
+             liveUser.isVideoAvatar ? (
+                <video src={liveUser.avatarUrl} autoPlay loop muted playsInline className="w-full h-full object-cover" />
              ) : (
-                <img src={chat.user.avatarUrl} alt="" className="w-full h-full object-cover" />
+                <img src={liveUser.avatarUrl} alt="" className="w-full h-full object-cover" />
              )
           ) : (
-            chat.user.name.charAt(0)
+            liveUser.name.charAt(0)
           )}
         </div>
-        {chat.user.status === 'online' && (
+        {isOnline && (
           <div className="absolute bottom-0 right-0 w-[15px] h-[15px] bg-tg-online border-[3.5px] border-tg-bg rounded-full shadow-[0_0_8px_rgba(77,217,100,0.5)]" />
         )}
       </div>
@@ -36,10 +58,10 @@ const ChatItem: React.FC<ChatItemProps> = ({ chat, onClick }) => {
       <div className="ml-4 flex-1 min-w-0 border-b border-tg-border/30 pb-2.5 group-last:border-none">
         <div className="flex justify-between items-baseline mb-0.5">
           <h3 className="text-[16px] font-bold text-white truncate pr-2 group-hover:text-tg-accent transition-colors flex items-center">
-            {chat.user.name}
-            {chat.user.isAdmin ? (
+            {liveUser.name}
+            {liveUser.isAdmin ? (
                <ShieldCheck size={14} className="ml-1 text-amber-500" fill="currentColor" stroke="black" strokeWidth={1} />
-            ) : chat.user.isOfficial ? (
+            ) : liveUser.isOfficial ? (
                <BadgeCheck size={14} className="ml-1 text-blue-500" fill="#2AABEE" stroke="white" />
             ) : null}
           </h3>

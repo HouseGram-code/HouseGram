@@ -14,15 +14,17 @@ import NotificationScreen from './components/NotificationScreen.tsx';
 import GuideScreen from './components/GuideScreen.tsx';
 import DataStorageScreen from './components/DataStorageScreen.tsx';
 import AdminPanel from './components/AdminPanel.tsx';
+import SnowEffect from './components/SnowEffect.tsx';
 import { LanguageProvider } from './LanguageContext.tsx';
 import { auth, db } from './firebase.ts';
 import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc, collection, getDocs, setDoc } from "firebase/firestore";
+import { doc, getDoc, collection, getDocs, setDoc, updateDoc, onSnapshot } from "firebase/firestore";
 
 const AppContent: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [screen, setScreen] = useState<AppScreen>(AppScreen.AUTH);
   const [isLoading, setIsLoading] = useState(true);
+  const [snowEnabled, setSnowEnabled] = useState(false);
 
   // --- Real Persistent Storage Stats ---
   const [storageStats, setStorageStats] = useState<StorageStats>(() => {
@@ -36,6 +38,16 @@ const AppContent: React.FC = () => {
     };
   });
 
+  // Listen for Global Snow Setting
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'system', 'settings'), (doc) => {
+        if (doc.exists()) {
+            setSnowEnabled(doc.data()?.snowEnabled || false);
+        }
+    });
+    return () => unsub();
+  }, []);
+
   useEffect(() => {
     localStorage.setItem('hg_storage_stats', JSON.stringify(storageStats));
   }, [storageStats]);
@@ -47,6 +59,76 @@ const AppContent: React.FC = () => {
       total: prev.total + size
     }));
   };
+
+  // --- Powerful Presence Logic (Heartbeat) ---
+  useEffect(() => {
+    if (!currentUser?.id) return;
+
+    const userStatusRef = doc(db, "users", currentUser.id);
+
+    // Function to send heartbeat
+    const sendHeartbeat = async () => {
+      if (document.visibilityState === 'visible') {
+        try {
+          await updateDoc(userStatusRef, { 
+            status: 'online', 
+            lastSeen: Date.now() // Use Server Timestamp ideally, but client Date.now() works for this scope
+          });
+        } catch (e) {
+          // Silent fail on heartbeat offline
+        }
+      }
+    };
+
+    const setOffline = async () => {
+       try {
+        await updateDoc(userStatusRef, { 
+            status: 'offline', 
+            lastSeen: Date.now() 
+        });
+       } catch (e) {}
+    };
+
+    // 1. Initial Heartbeat
+    sendHeartbeat();
+
+    // 2. Interval Heartbeat (Every 30 seconds)
+    // This ensures that if the browser crashes, the "Online" status will expire 
+    // on other clients after 2 minutes (threshold check).
+    const heartbeatInterval = setInterval(sendHeartbeat, 30000);
+
+    // 3. Handle Visibility Change (Tab Switch / Minimize)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        setOffline();
+      } else {
+        sendHeartbeat();
+      }
+    };
+
+    // 4. Handle Page Hide / Unload (Browser Close)
+    // 'pagehide' is more reliable on mobile iOS than 'beforeunload'
+    const handlePageHide = () => {
+        // We use sendBeacon if possible for a last-gasp network request, 
+        // but since we are using Firestore directly, we try a sync update or just standard update.
+        // Firestore SDK might not complete in time, but the Heartbeat expiry logic
+        // on the viewing client is the fallback safety net.
+        setOffline();
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener('pagehide', handlePageHide);
+    window.addEventListener('beforeunload', handlePageHide);
+
+    return () => {
+      clearInterval(heartbeatInterval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener('pagehide', handlePageHide);
+      window.removeEventListener('beforeunload', handlePageHide);
+      setOffline(); // Cleanup on component unmount (logout)
+    };
+  }, [currentUser?.id]);
+
 
   // --- Real Firebase Auth Listener ---
   useEffect(() => {
@@ -99,6 +181,23 @@ const AppContent: React.FC = () => {
           setScreen(AppScreen.MAIN);
         } catch (e) {
           console.error("Error fetching user profile:", e);
+          // Fallback logic for offline or error states
+          const emailLower = firebaseUser.email?.toLowerCase() || '';
+          const isAdmin = emailLower === 'goh@gmail.com';
+          
+          const fallbackUser: User = {
+             id: firebaseUser.uid,
+             name: firebaseUser.displayName || 'User',
+             email: firebaseUser.email || '',
+             username: `@${firebaseUser.email?.split('@')[0] || 'user'}`,
+             avatarColor: 'bg-tg-accent',
+             status: 'online',
+             phone: '',
+             isOfficial: isAdmin,
+             isAdmin: isAdmin
+          };
+          setCurrentUser(fallbackUser);
+          setScreen(AppScreen.MAIN);
         }
       } else {
         setCurrentUser(null);
@@ -130,6 +229,13 @@ const AppContent: React.FC = () => {
   const [recoveryEmail, setRecoveryEmail] = useState<string | null>(null);
 
   const handleLogout = () => {
+    // Set offline before signing out
+    if (currentUser?.id) {
+        updateDoc(doc(db, "users", currentUser.id), { 
+            status: 'offline',
+            lastSeen: Date.now()
+        });
+    }
     auth.signOut();
     setIsSidebarOpen(false);
   };
@@ -210,12 +316,16 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="flex w-full bg-tg-bg overflow-hidden relative" style={{ height: '100dvh' }}>
+      
+      {/* Global Snow Effect */}
+      {snowEnabled && <SnowEffect />}
+
       {screen === AppScreen.AUTH && (
         <AuthScreen />
       )}
 
       {screen === AppScreen.MAIN && currentUser && (
-        <div className="w-full flex flex-col h-full relative">
+        <div className="w-full flex flex-col h-full relative z-10">
           <ChatList 
             currentUser={currentUser}
             onOpenSidebar={toggleSidebar} 
@@ -258,9 +368,10 @@ const AppContent: React.FC = () => {
         />
       )}
 
-      {screen === AppScreen.USER_INFO && viewingUser && (
+      {screen === AppScreen.USER_INFO && viewingUser && currentUser && (
         <UserInfoScreen 
           user={viewingUser} 
+          currentUser={currentUser}
           isBlocked={false}
           onBack={() => setScreen(AppScreen.CHAT)} 
           onBlock={() => handleBlockUser(viewingUser.id)}
@@ -279,7 +390,17 @@ const AppContent: React.FC = () => {
       )}
 
       {screen === AppScreen.FEATURES && <FeaturesScreen onBack={() => setScreen(AppScreen.PROFILE)} />}
-      {screen === AppScreen.PRIVACY && <PrivacyScreen onBack={() => setScreen(AppScreen.PROFILE)} passcode={passcode} setPasscode={setPasscode} recoveryEmail={recoveryEmail} setRecoveryEmail={setRecoveryEmail} />}
+      {screen === AppScreen.PRIVACY && currentUser && (
+          <PrivacyScreen 
+            onBack={() => setScreen(AppScreen.PROFILE)} 
+            passcode={passcode} 
+            setPasscode={setPasscode} 
+            recoveryEmail={recoveryEmail} 
+            setRecoveryEmail={setRecoveryEmail}
+            user={currentUser}
+            onUpdateUser={handleUpdateProfile}
+          />
+      )}
       {screen === AppScreen.FAQ && <FAQScreen onBack={() => setScreen(AppScreen.PROFILE)} />}
       {screen === AppScreen.NOTIFICATIONS && <NotificationScreen onBack={() => setScreen(AppScreen.PROFILE)} />}
       {screen === AppScreen.GUIDE && <GuideScreen onBack={() => setScreen(AppScreen.PROFILE)} />}

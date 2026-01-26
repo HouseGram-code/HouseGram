@@ -84,8 +84,8 @@
       .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       
       /* Dynamic Safe Area Padding */
-      .pb-safe { padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 20px)); }
-      .pt-safe { padding-top: env(safe-area-inset-top, 20px); }
+      .pb-safe { padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 20px)); }
+      .pt-safe { padding-top: max(12px, env(safe-area-inset-top)); }
       
       /* 3D Dice Styles */
       .dice-scene {
@@ -172,6 +172,16 @@
         100% { transform: var(--target-pos) scale(1) rotate(-45deg); }
       }
       .anim-dart { animation: dart-throw 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+
+      /* Snow Animation */
+      @keyframes snow-fall {
+        0% { transform: translateY(-10px); }
+        100% { transform: translateY(110vh); }
+      }
+      @keyframes snow-sway {
+        0%, 100% { margin-left: 0; }
+        50% { margin-left: 20px; }
+      }
 
     </style>
 <script type="importmap">
