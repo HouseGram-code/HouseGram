@@ -14,31 +14,23 @@ interface ChatListProps {
   onOpenChat: (chat: Chat) => void;
 }
 
-// Define the update messages globally or outside component to reuse
-const LATEST_UPDATE_TEXT = '🚀 Update v0.0.1.2: Fixed Upload Skidding';
-const UPDATE_MESSAGES_BATCH = [
-    {
-        senderId: NEWS_BOT_USER.id,
-        text: '👋 **Welcome to HouseGram News!**', // Note: For existing users, duplicates might appear if we aren't careful, but we'll handle that.
-        // Actually, for existing users we probably only want the NEW messages.
-        // Let's separate the "Update" payload.
-        timestampOffset: 180000,
-        type: 'text'
-    },
-    // ...
-];
+// Configuration for the latest update
+const UPDATE_VERSION = "v0.0.1.2";
+const UPDATE_TITLE = `🚀 Update ${UPDATE_VERSION}: Fixed Upload Skidding`;
+const UPDATE_VIDEO_URL = 'https://assets.mixkit.co/videos/preview/mixkit-hands-of-a-man-typing-on-a-smartphone-1680-large.mp4';
 
+// Messages to inject
 const NEW_UPDATE_MESSAGES = [
     {
         senderId: NEWS_BOT_USER.id,
         text: '📅 **Feature Spotlight: Scheduling**\n\nPlan your messages perfectly. You can now schedule messages to be sent at a specific time.\n\n**How to use:**\n1. Type your message.\n2. **Long press** the Send button.\n3. Select "Schedule Message".\n\nSee it in action below! 👇',
-        mediaUrl: 'https://assets.mixkit.co/videos/preview/mixkit-hands-of-a-man-typing-on-a-smartphone-1680-large.mp4',
+        mediaUrl: UPDATE_VIDEO_URL,
         timestampOffset: 120000,
         type: 'video'
     },
     {
         senderId: NEWS_BOT_USER.id,
-        text: LATEST_UPDATE_TEXT + '\n\nWe heard your feedback about "skidding" media uploads.\n\n📸 **Fixed Skidding**: We implemented a new client-side compression engine. Photos now upload instantly without lagging the interface.\n\n💎 **Zippers Balance**: You can now view your exact Zippers balance directly in Settings.\n\n⚡ **Performance**: General stability improvements.\n\nUpdate is live automatically. Enjoy!',
+        text: UPDATE_TITLE + '\n\nWe heard your feedback about "skidding" media uploads.\n\n📸 **Fixed Skidding**: We implemented a new client-side compression engine. Photos now upload instantly without lagging the interface.\n\n💎 **Zippers Balance**: You can now view your exact Zippers balance directly in Settings.\n\n⚡ **Performance**: General stability improvements.\n\nUpdate is live automatically. Enjoy!',
         timestampOffset: 0,
         type: 'text'
     }
@@ -108,31 +100,36 @@ const ChatList: React.FC<ChatListProps> = ({
     // Dynamic Timestamp for "Now" feel
     const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    // Latest update message visual
+    // Construct the latest update message object
     const latestUpdateMsg = {
-        id: 'update-v0012',
+        id: `update-${UPDATE_VERSION.replace(/\./g, '')}`,
         senderId: NEWS_BOT_USER.id,
-        text: '🚀 Update v0.0.1.2: Fixed Upload Skidding',
+        text: UPDATE_TITLE,
         timestamp: nowTime,
         isRead: false,
         type: 'text' as const
     };
 
     if (realNewsChat) {
-        // Fix: If the real chat exists but has old data (not the latest update), 
-        // override it visually here so the user sees the update immediately (no flash).
-        // We'll handle the actual DB update on click.
-        if (realNewsChat.lastMessage.text !== latestUpdateMsg.text && !realNewsChat.lastMessage.text?.includes('v0.0.1.2')) {
+        // FIX: If the real chat exists but the DB hasn't been updated with the new message yet,
+        // we FORCE it to look like it has the update. This prevents the "flashing"/removal issue.
+        // We check if the last message text contains the current version string.
+        const dbMsgText = realNewsChat.lastMessage?.text || '';
+        const hasLatestUpdate = dbMsgText.includes(UPDATE_VERSION) || dbMsgText.includes('Upload Skidding');
+
+        if (!hasLatestUpdate) {
+            // Override the display state to show the new update immediately
             const overriddenChat = {
                 ...realNewsChat,
                 lastMessage: latestUpdateMsg,
-                unreadCount: 1
+                unreadCount: 1 // Force unread badge
             };
             return [overriddenChat, ...otherChats];
         }
         return [realNewsChat, ...otherChats];
     }
 
+    // Fallback: User has never opened the news chat, show placeholder
     const newsPlaceholder: Chat = {
         id: 'news-placeholder',
         user: NEWS_BOT_USER,
@@ -183,7 +180,7 @@ const ChatList: React.FC<ChatListProps> = ({
       // Logic to deliver updates if they are missing
       if (chat.user.id === NEWS_BOT_USER.id) {
           
-          // Case 1: Placeholder (New User)
+          // Case 1: Placeholder (New User - Chat doesn't exist in DB yet)
           if (chat.id === 'news-placeholder') {
             try {
                 const newChatRef = await addDoc(collection(db, "chats"), {
@@ -193,7 +190,7 @@ const ChatList: React.FC<ChatListProps> = ({
                     isReadOnly: true,
                     updatedAt: Date.now(),
                     lastMessage: {
-                        text: '🚀 Update v0.0.1.2: Fixed Upload Skidding',
+                        text: UPDATE_TITLE,
                         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                         senderId: NEWS_BOT_USER.id,
                         type: 'text'
@@ -229,11 +226,12 @@ const ChatList: React.FC<ChatListProps> = ({
                 console.error("Error creating news chat", e);
             }
           } 
-          // Case 2: Existing User (Check if update missing)
+          // Case 2: Existing User (Chat exists, but might need update injection)
           else {
               // We check the 'raw' chat from state to see if DB is stale
               const rawChat = chats.find(c => c.id === chat.id);
-              const needsUpdate = rawChat && !rawChat.lastMessage?.text?.includes('v0.0.1.2');
+              const dbMsgText = rawChat?.lastMessage?.text || '';
+              const needsUpdate = !dbMsgText.includes(UPDATE_VERSION) && !dbMsgText.includes('Upload Skidding');
 
               if (needsUpdate) {
                   try {
@@ -250,7 +248,7 @@ const ChatList: React.FC<ChatListProps> = ({
                       // Update main chat doc
                       await updateDoc(doc(db, "chats", chat.id), {
                           lastMessage: {
-                            text: '🚀 Update v0.0.1.2: Fixed Upload Skidding',
+                            text: UPDATE_TITLE,
                             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                             senderId: NEWS_BOT_USER.id,
                             type: 'text'
