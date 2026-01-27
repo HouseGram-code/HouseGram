@@ -50,7 +50,7 @@ export const MOCK_CHATS: Chat[] = [
       timestamp: '14:30',
       isRead: false,
       type: 'text',
-      text: '🚀 Update v0.0.1.2: Skidding fixed & new Zippers UI'
+      text: '🚀 Update v0.0.1.2: Fixed Upload Skidding'
     },
     unreadCount: 1,
     type: 'channel',
@@ -97,8 +97,8 @@ export const MOCK_MESSAGES: Message[] = [
     timestamp: '14:29',
     isRead: true,
     type: 'video',
-    mediaUrl: 'https://v4.cdnpk.net/videvo_files/video/free/2019-05/large_watermarked/190516_06_Keyboard_05_preview.mp4',
-    text: '📅 **Feature Spotlight: Scheduling**\n\nPlan your messages perfectly. You can now schedule messages to be sent at a specific time.\n\n**How to use:**\n1. Type your message.\n2. **Long press** the Send button.\n3. Select "Schedule Message".'
+    mediaUrl: 'https://assets.mixkit.co/videos/preview/mixkit-hands-of-a-man-typing-on-a-smartphone-1680-large.mp4',
+    text: '📅 **Feature Spotlight: Scheduling**\n\nPlan your messages perfectly. You can now schedule messages to be sent at a specific time.\n\n**How to use:**\n1. Type your message.\n2. **Long press** the Send button.\n3. Select "Schedule Message".\n\nSee it in action below! 👇'
   },
   {
     id: 'n3',
