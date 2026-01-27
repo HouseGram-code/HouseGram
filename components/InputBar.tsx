@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Smile, Paperclip, Mic, Send, Trash2, StopCircle, Keyboard, Image, FileText, Music, Headphones, Loader2, Gamepad2, Calendar, Clock, X } from 'lucide-react';
+import { Smile, Paperclip, Mic, Send, Trash2, StopCircle, Keyboard, Image, FileText, Music, Headphones, Loader2, Gamepad2, Calendar, Clock, X, Sticker, Gift as GiftIcon } from 'lucide-react';
 import EmojiPicker, { Theme, EmojiStyle } from 'emoji-picker-react';
 import { useLanguage } from '../LanguageContext.tsx';
 import { Message } from '../types.ts';
@@ -11,13 +11,16 @@ interface InputBarProps {
   onSend: (text: string, type: Message['type'], mediaUrl?: string, meta?: string, scheduledTime?: number) => void;
   storageUsage: number;
   onFileUpload: (size: number, category: 'media' | 'files' | 'voice') => void;
+  onTyping?: () => void;
+  onGiftClick?: () => void;
 }
 
-const InputBar: React.FC<InputBarProps> = ({ onSend, storageUsage, onFileUpload }) => {
+const InputBar: React.FC<InputBarProps> = ({ onSend, storageUsage, onFileUpload, onTyping, onGiftClick }) => {
   const { t } = useLanguage();
   const [text, setText] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
+  const [showStickers, setShowStickers] = useState(false);
   const [showAttach, setShowAttach] = useState(false);
   
   // Schedule Logic
@@ -25,6 +28,7 @@ const InputBar: React.FC<InputBarProps> = ({ onSend, storageUsage, onFileUpload 
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [scheduleDate, setScheduleDate] = useState(new Date());
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Recording State
   const [isRecording, setIsRecording] = useState(false);
@@ -36,6 +40,7 @@ const InputBar: React.FC<InputBarProps> = ({ onSend, storageUsage, onFileUpload 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
+  const stickerRef = useRef<HTMLDivElement>(null);
   const attachRef = useRef<HTMLDivElement>(null);
   const sendMenuRef = useRef<HTMLDivElement>(null);
 
@@ -43,6 +48,14 @@ const InputBar: React.FC<InputBarProps> = ({ onSend, storageUsage, onFileUpload 
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const musicInputRef = useRef<HTMLInputElement>(null);
+
+  const MEME_GIFS = [
+    'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOHl5eGlxODl5bHIzYm16YnZ6aW14eGp6MTRmb2V6bm85YjB2Nm15bSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/Ju7l5y9osyymQ/giphy.gif', // Rick Roll
+    'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3Z6aW14eGp6MTRmb2V6bm85YjB2Nm15bWh0Z254ZWF0Znd5Yzl5ZSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/Cmr1OMJ2FN0B2/giphy.gif', // Vibing Cat
+    'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOHl5eGlxODl5bHIzYm16YnZ6aW14eGp6MTRmb2V6bm85YjB2Nm15bSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/QMHoU66sBXqqLqYvGO/giphy.gif', // This is Fine
+    'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbXNtaW14eGp6MTRmb2V6bm85YjB2Nm15bHk0Z254ZWF0Znd5Yzl5ZSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/BPJmthQ3YRwD6QqcVD/giphy.gif', // Cheers
+    'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOHl5eGlxODl5bHIzYm16YnZ6aW14eGp6MTRmb2V6bm85YjB2Nm15bSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l3q2K5jinAlChoCLS/giphy.gif', // Confused Lady
+  ];
 
   useEffect(() => {
     return () => {
@@ -61,6 +74,11 @@ const InputBar: React.FC<InputBarProps> = ({ onSend, storageUsage, onFileUpload 
           setShowEmoji(false);
         }
       }
+      if (stickerRef.current && !stickerRef.current.contains(event.target as Node)) {
+        if (!(event.target as HTMLElement).closest('.sticker-toggle-btn')) {
+          setShowStickers(false);
+        }
+      }
       if (attachRef.current && !attachRef.current.contains(event.target as Node)) {
         if (!(event.target as HTMLElement).closest('.attach-toggle-btn')) {
           setShowAttach(false);
@@ -71,13 +89,29 @@ const InputBar: React.FC<InputBarProps> = ({ onSend, storageUsage, onFileUpload 
       }
     };
 
-    if (showEmoji || showAttach || showSendMenu) {
+    if (showEmoji || showAttach || showSendMenu || showStickers) {
       document.addEventListener('mousedown', handleClickOutside);
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showEmoji, showAttach, showSendMenu]);
+  }, [showEmoji, showAttach, showSendMenu, showStickers]);
+
+  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const newVal = e.target.value;
+      setText(newVal);
+
+      // Trigger typing event with debounce/throttle logic
+      if (newVal.length > 0 && onTyping) {
+         if (!typingTimeoutRef.current) {
+             onTyping();
+             // Prevent spamming writes
+             typingTimeoutRef.current = setTimeout(() => {
+                 typingTimeoutRef.current = null;
+             }, 2000); 
+         }
+      }
+  };
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -85,8 +119,73 @@ const InputBar: React.FC<InputBarProps> = ({ onSend, storageUsage, onFileUpload 
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Helper: Compress Image to max 1280px and 0.8 quality JPEG
+  const compressImage = (file: File): Promise<File> => {
+    return new Promise((resolve) => {
+        // Only compress images
+        if (!file.type.match(/image.*/)) {
+            resolve(file);
+            return;
+        }
+
+        const img = document.createElement('img');
+        const reader = new FileReader();
+        
+        reader.onload = (e) => {
+            img.src = e.target?.result as string;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                const MAX_SIZE = 1280;
+
+                // Calculate new dimensions
+                if (width > height) {
+                    if (width > MAX_SIZE) {
+                        height *= MAX_SIZE / width;
+                        width = MAX_SIZE;
+                    }
+                } else {
+                    if (height > MAX_SIZE) {
+                        width *= MAX_SIZE / height;
+                        height = MAX_SIZE;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    resolve(file); // Fallback
+                    return;
+                }
+                
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                canvas.toBlob((blob) => {
+                    if (blob) {
+                        // Create new file from blob
+                        const newFile = new File([blob], file.name, {
+                            type: 'image/jpeg',
+                            lastModified: Date.now(),
+                        });
+                        resolve(newFile);
+                    } else {
+                        resolve(file);
+                    }
+                }, 'image/jpeg', 0.85); // 85% quality
+            };
+            img.onerror = () => resolve(file);
+        };
+        reader.onerror = () => resolve(file);
+        reader.readAsDataURL(file);
+    });
+  };
+
   const uploadToFirebase = async (file: File | Blob, folder: string): Promise<string> => {
-    const filename = `${folder}/${Date.now()}_${(Math.random() * 1000).toFixed(0)}`;
+    // Generate simple filename to avoid path issues
+    const ext = file instanceof File ? file.name.split('.').pop() : 'webm';
+    const filename = `${folder}/${Date.now()}_${Math.floor(Math.random() * 10000)}.${ext}`;
     const storageRef = ref(storage, filename);
     await uploadBytes(storageRef, file);
     return getDownloadURL(storageRef);
@@ -94,6 +193,7 @@ const InputBar: React.FC<InputBarProps> = ({ onSend, storageUsage, onFileUpload 
 
   const startRecording = async () => {
     setShowEmoji(false);
+    setShowStickers(false);
     setShowAttach(false);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -154,6 +254,7 @@ const InputBar: React.FC<InputBarProps> = ({ onSend, storageUsage, onFileUpload 
       onSend(text, 'text', undefined, undefined, scheduledTime);
       setText('');
       setShowEmoji(false);
+      setShowStickers(false);
       setShowAttach(false);
       setShowSendMenu(false);
       setShowScheduleModal(false);
@@ -178,15 +279,32 @@ const InputBar: React.FC<InputBarProps> = ({ onSend, storageUsage, onFileUpload 
     }
   };
 
+  const handleGifSend = (url: string) => {
+      onSend('', 'image', url);
+      setShowStickers(false);
+  };
+
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>, type: 'media' | 'file' | 'audio') => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    e.preventDefault();
+    const rawFile = e.target.files?.[0];
+    if (!rawFile) return;
+
+    // Reset input
+    e.target.value = '';
 
     setIsUploading(true);
     setShowAttach(false);
+    setShowStickers(false);
 
     try {
-        const sizeStr = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+        let fileToUpload = rawFile;
+        
+        // Compress if it's an image
+        if (type === 'media' && rawFile.type.startsWith('image/')) {
+            fileToUpload = await compressImage(rawFile);
+        }
+
+        const sizeStr = (fileToUpload.size / 1024 / 1024).toFixed(2) + ' MB';
         let msgType: Message['type'] = 'file';
         let category: 'media' | 'files' | 'voice' = 'files';
         let folder = 'files';
@@ -194,26 +312,26 @@ const InputBar: React.FC<InputBarProps> = ({ onSend, storageUsage, onFileUpload 
         if (type === 'media') {
             category = 'media';
             folder = 'media';
-            if (file.type.startsWith('image/')) msgType = 'image';
-            else if (file.type.startsWith('video/')) msgType = 'video';
+            if (fileToUpload.type.startsWith('image/')) msgType = 'image';
+            else if (fileToUpload.type.startsWith('video/')) msgType = 'video';
         } else if (type === 'audio') {
             msgType = 'audio';
             category = 'files';
             folder = 'audio';
         }
 
-        const url = await uploadToFirebase(file, folder);
-        onSend(file.name, msgType, url, sizeStr);
-        onFileUpload(file.size, category);
-
-        // Reset inputs
-        if (galleryInputRef.current) galleryInputRef.current.value = '';
-        if (fileInputRef.current) fileInputRef.current.value = '';
-        if (musicInputRef.current) musicInputRef.current.value = '';
+        const url = await uploadToFirebase(fileToUpload, folder);
+        
+        if (url) {
+            onSend(rawFile.name, msgType, url, sizeStr);
+            onFileUpload(fileToUpload.size, category);
+        } else {
+            throw new Error("Upload failed (empty URL)");
+        }
 
     } catch (e) {
-        console.error(e);
-        alert("Upload failed.");
+        console.error("File upload error:", e);
+        alert("Upload failed. Please try again.");
     } finally {
         setIsUploading(false);
     }
@@ -281,9 +399,27 @@ const InputBar: React.FC<InputBarProps> = ({ onSend, storageUsage, onFileUpload 
     <>
       <div className="z-20 bg-tg-sidebar px-2 pt-2 pb-safe flex items-center space-x-2 border-t border-tg-border/50 relative shrink-0 w-full">
         
-        <input type="file" ref={galleryInputRef} onChange={(e) => handleFileSelect(e, 'media')} className="hidden" accept="image/*,video/*" />
-        <input type="file" ref={fileInputRef} onChange={(e) => handleFileSelect(e, 'file')} className="hidden" />
-        <input type="file" ref={musicInputRef} onChange={(e) => handleFileSelect(e, 'audio')} className="hidden" accept="audio/*" />
+        {/* Hidden Inputs with Correct Accept Types */}
+        <input 
+            type="file" 
+            ref={galleryInputRef} 
+            onChange={(e) => handleFileSelect(e, 'media')} 
+            className="hidden" 
+            accept="image/*,video/*" 
+        />
+        <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={(e) => handleFileSelect(e, 'file')} 
+            className="hidden" 
+        />
+        <input 
+            type="file" 
+            ref={musicInputRef} 
+            onChange={(e) => handleFileSelect(e, 'audio')} 
+            className="hidden" 
+            accept="audio/*" 
+        />
 
         {/* Schedule Menu Popover */}
         {showSendMenu && (
@@ -295,6 +431,32 @@ const InputBar: React.FC<InputBarProps> = ({ onSend, storageUsage, onFileUpload 
                     <Calendar size={18} className="text-tg-accent" />
                     <span className="font-medium">Schedule Message</span>
                 </button>
+            </div>
+        )}
+
+        {/* Sticker/GIF Picker */}
+        {showStickers && (
+            <div ref={stickerRef} className="absolute bottom-[80px] left-0 right-0 z-50 animate-form-entrance shadow-2xl overflow-hidden mx-auto w-full max-w-md px-2">
+                <div className="bg-[#17212B] border border-tg-border rounded-xl shadow-2xl overflow-hidden">
+                    <div className="px-4 py-3 border-b border-tg-border/50 bg-[#1c242f]">
+                        <h3 className="text-white text-sm font-bold flex items-center gap-2">
+                            <Sticker size={16} className="text-tg-accent" />
+                            Trending GIFs
+                        </h3>
+                    </div>
+                    <div className="p-2 grid grid-cols-3 gap-2 max-h-[300px] overflow-y-auto no-scrollbar">
+                        {MEME_GIFS.map((url, i) => (
+                            <button 
+                                key={i} 
+                                onClick={() => handleGifSend(url)}
+                                className="aspect-square rounded-lg overflow-hidden relative group border border-white/5 hover:border-tg-accent/50 transition-all"
+                            >
+                                <img src={url} alt="GIF" className="w-full h-full object-cover" />
+                                <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
+                            </button>
+                        ))}
+                    </div>
+                </div>
             </div>
         )}
 
@@ -329,6 +491,12 @@ const InputBar: React.FC<InputBarProps> = ({ onSend, storageUsage, onFileUpload 
               <div className="w-8 h-8 rounded-full bg-pink-500/20 text-pink-500 flex items-center justify-center"><Headphones size={18} /></div><span className="text-white font-medium">Music</span>
             </button>
             
+            {onGiftClick && (
+                <button onClick={() => { onGiftClick(); setShowAttach(false); }} className="w-full px-4 py-3 flex items-center space-x-3 hover:bg-white/5 transition-colors">
+                    <div className="w-8 h-8 rounded-full bg-purple-500/20 text-purple-500 flex items-center justify-center"><GiftIcon size={18} /></div><span className="text-white font-medium">Gift</span>
+                </button>
+            )}
+
             <div className="h-px bg-white/5 my-1 mx-4" />
             <div className="px-4 py-2 text-xs font-bold text-tg-secondary uppercase tracking-wider">Games</div>
             
@@ -359,10 +527,15 @@ const InputBar: React.FC<InputBarProps> = ({ onSend, storageUsage, onFileUpload 
             </div>
           ) : (
             <>
-              <button onClick={() => setShowEmoji(!showEmoji)} className={`emoji-toggle-btn p-1 transition-colors hover:text-tg-accent shrink-0 ${showEmoji ? 'text-tg-accent' : 'text-tg-secondary'}`}>
+              <button onClick={() => { setShowEmoji(!showEmoji); setShowStickers(false); }} className={`emoji-toggle-btn p-1 transition-colors hover:text-tg-accent shrink-0 ${showEmoji ? 'text-tg-accent' : 'text-tg-secondary'}`}>
                 {showEmoji ? <Keyboard size={24} /> : <Smile size={24} />}
               </button>
-              <input type="text" placeholder={t('message')} value={text} onChange={(e) => setText(e.target.value)} onKeyDown={handleKeyDown} className="flex-1 bg-transparent text-white placeholder-tg-secondary focus:outline-none text-[16px] py-2 min-w-0" />
+              
+              <button onClick={() => { setShowStickers(!showStickers); setShowEmoji(false); }} className={`sticker-toggle-btn p-1 transition-colors hover:text-tg-accent shrink-0 ${showStickers ? 'text-tg-accent' : 'text-tg-secondary'}`}>
+                 <Sticker size={24} />
+              </button>
+
+              <input type="text" placeholder={t('message')} value={text} onChange={handleTextChange} onKeyDown={handleKeyDown} className="flex-1 bg-transparent text-white placeholder-tg-secondary focus:outline-none text-[16px] py-2 min-w-0" />
               <button onClick={() => setShowAttach(!showAttach)} className={`attach-toggle-btn p-1 transition-colors hover:text-tg-accent transform duration-200 shrink-0 ${showAttach ? 'text-tg-accent rotate-45' : 'text-tg-secondary'}`}>
                 <Paperclip size={22} className={showAttach ? "" : "rotate-45"} />
               </button>

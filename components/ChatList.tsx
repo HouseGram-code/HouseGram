@@ -56,7 +56,8 @@ const ChatList: React.FC<ChatListProps> = ({
                     lastMessage: data.lastMessage || { text: 'No messages yet', timestamp: '', type: 'text' },
                     unreadCount: 0,
                     type: data.type || 'private',
-                    isReadOnly: data.isReadOnly
+                    isReadOnly: data.isReadOnly,
+                    typing: data.typing // Pass typing map
                 } as Chat);
             }
         });
@@ -70,26 +71,34 @@ const ChatList: React.FC<ChatListProps> = ({
   }, [currentUser.id]);
 
   const displayChats = useMemo(() => {
-    const hasNewsChat = chats.some(c => c.user.id === NEWS_BOT_USER.id);
-    if (hasNewsChat) return chats;
+    // Logic: If the real news chat exists, use it. If not, force the placeholder to the TOP.
+    const realNewsChat = chats.find(c => c.user.id === NEWS_BOT_USER.id);
+    const otherChats = chats.filter(c => c.user.id !== NEWS_BOT_USER.id);
+
+    // Dynamic Timestamp for "Now" feel
+    const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    if (realNewsChat) {
+        return [realNewsChat, ...otherChats];
+    }
 
     const newsPlaceholder: Chat = {
         id: 'news-placeholder',
         user: NEWS_BOT_USER,
         lastMessage: {
-            id: 'intro',
+            id: 'update-v0012',
             senderId: NEWS_BOT_USER.id,
-            text: 'HouseGram updated to v0.01.1',
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            text: '🚀 Update v0.0.1.2: Skidding fixed & new Zippers UI',
+            timestamp: nowTime,
             isRead: false,
             type: 'text'
         },
-        unreadCount: 3,
+        unreadCount: 1,
         type: 'channel',
         isReadOnly: true
     };
 
-    return [newsPlaceholder, ...chats];
+    return [newsPlaceholder, ...otherChats];
   }, [chats]);
 
   useEffect(() => {
@@ -136,44 +145,46 @@ const ChatList: React.FC<ChatListProps> = ({
                 isReadOnly: true,
                 updatedAt: Date.now(),
                 lastMessage: {
-                    text: 'HouseGram updated to v0.01.1',
+                    text: '🚀 Update v0.0.1.2: Skidding fixed & new Zippers UI',
                     timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                     senderId: NEWS_BOT_USER.id,
                     type: 'text'
                 }
             });
 
-            // Message 1: Update & Changelog
-            await addDoc(collection(db, "chats", newChatRef.id, "messages"), {
-                senderId: NEWS_BOT_USER.id,
-                text: '🚀 **HouseGram v0.01.1**\n\nWe have fixed minor bugs and improved overall stability. The app is now smoother and more reliable than ever.\n\nEnjoy the update!',
-                timestamp: new Date(Date.now() - 120000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                timestampRaw: Date.now() - 120000,
-                isRead: true,
-                type: 'text'
-            });
+            const batchMessages = [
+                {
+                    senderId: NEWS_BOT_USER.id,
+                    text: '👋 **Welcome to HouseGram News!**',
+                    timestamp: new Date(Date.now() - 180000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    timestampRaw: Date.now() - 180000,
+                    isRead: true,
+                    type: 'text'
+                },
+                {
+                    senderId: NEWS_BOT_USER.id,
+                    text: '📅 **Feature Spotlight: Scheduling**\n\nPlan your messages perfectly. You can now schedule messages to be sent at a specific time.\n\n**How to use:**\n1. Type your message.\n2. **Long press** the Send button.\n3. Select "Schedule Message".\n\nSee it in action below! 👇',
+                    // Using a more reliable, fast-loading MP4 (Tech/Typing theme)
+                    mediaUrl: 'https://v4.cdnpk.net/videvo_files/video/free/2019-05/large_watermarked/190516_06_Keyboard_05_preview.mp4',
+                    timestamp: new Date(Date.now() - 120000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    timestampRaw: Date.now() - 120000,
+                    isRead: true,
+                    type: 'video'
+                },
+                {
+                    senderId: NEWS_BOT_USER.id,
+                    text: '🚀 **Update v0.0.1.2 Live Now!**\n\nWe heard your feedback about "skidding" media uploads.\n\n📸 **Fixed Skidding**: We implemented a new client-side compression engine. Photos now upload instantly without lagging the interface.\n\n💎 **Zippers Balance**: You can now view your exact Zippers balance directly in Settings.\n\n⚡ **Performance**: General stability improvements.\n\nUpdate is live automatically. Enjoy!',
+                    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    timestampRaw: Date.now(),
+                    isRead: true,
+                    type: 'text'
+                }
+            ];
 
-             // Message 2: Scheduling Demo (Video)
-            await addDoc(collection(db, "chats", newChatRef.id, "messages"), {
-                senderId: NEWS_BOT_USER.id,
-                text: '📅 **Schedule Messages**\n\nPlan your messages perfectly. You can now schedule messages to be sent at a specific time.\n\n**How to use:**\n1. Type your message.\n2. **Long press** the Send button.\n3. Select "Schedule Message" and pick a date.\n\nTry it out today!',
-                mediaUrl: 'https://assets.mixkit.co/videos/preview/mixkit-hands-of-a-man-typing-on-a-smartphone-1680-large.mp4',
-                timestamp: new Date(Date.now() - 60000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                timestampRaw: Date.now() - 60000,
-                isRead: true,
-                type: 'video'
-            });
-
-             // Message 3: Last Seen Privacy Demo (Video)
-             await addDoc(collection(db, "chats", newChatRef.id, "messages"), {
-                senderId: NEWS_BOT_USER.id,
-                text: '👀 **Last Seen & Online Privacy**\n\nYou now have granular control over who sees your status. \n\nWe adhere to the **Reciprocity Rule**: if you hide your Last Seen time from others (by selecting "Nobody"), you will not be able to see their Last Seen time either.\n\nGo to **Settings > Privacy** to configure this.',
-                mediaUrl: 'https://assets.mixkit.co/videos/preview/mixkit-woman-scrolling-on-smartphone-in-the-dark-1686-large.mp4',
-                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                timestampRaw: Date.now(),
-                isRead: true,
-                type: 'video'
-            });
+            // Add messages sequentially
+            for (const msg of batchMessages) {
+                await addDoc(collection(db, "chats", newChatRef.id, "messages"), msg);
+            }
 
             const realChat: Chat = {
                 ...chat,
@@ -319,4 +330,3 @@ const ChatList: React.FC<ChatListProps> = ({
 };
 
 export default ChatList;
-    

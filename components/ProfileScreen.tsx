@@ -2,7 +2,7 @@
 import React, { useState, useRef } from 'react';
 import { 
   ArrowLeft, Camera, Check, Info, AtSign, Mail, Edit2, 
-  Bell, Lock, Shield, Globe, HelpCircle, LogOut, Play, BookOpen, BadgeCheck, ShieldCheck, ShieldAlert
+  Bell, Lock, Shield, Globe, HelpCircle, LogOut, Play, BookOpen, BadgeCheck, ShieldCheck, ShieldAlert, Zap, X
 } from 'lucide-react';
 import { User, Language } from '../types.ts';
 import { useLanguage } from '../LanguageContext.tsx';
@@ -32,6 +32,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const [isVideo, setIsVideo] = useState(user.isVideoAvatar || false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [showLanguagePicker, setShowLanguagePicker] = useState(false);
+  const [showBalance, setShowBalance] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -227,6 +228,14 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({
         </div>
 
         <div className="mt-4 bg-tg-sidebar border-y border-tg-border">
+          {/* My Zippers Button */}
+          <div className="cursor-pointer hover:bg-white/5 transition-colors" onClick={() => setShowBalance(true)}>
+             <SettingsItem 
+                icon={<Zap size={22} className="text-amber-400 fill-amber-400" />} 
+                label="My Zippers" 
+                badge={<span className="text-amber-400 text-[10px] font-bold bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">{user.zippers || 0}</span>}
+             />
+          </div>
           <div onClick={onOpenGuide}>
             <SettingsItem icon={<BookOpen size={22} />} label={t('howToUse')} />
           </div>
@@ -285,6 +294,31 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({
             ))}
           </div>
         </div>
+      )}
+
+      {showBalance && (
+          <div className="fixed inset-0 z-[60] flex flex-col bg-black/90 animate-fadeIn justify-center items-center p-6">
+              <div className="bg-[#1c242f] w-full max-w-sm rounded-2xl border border-white/10 p-6 relative shadow-2xl animate-form-entrance">
+                  <button onClick={() => setShowBalance(false)} className="absolute top-4 right-4 text-white/50 hover:text-white">
+                      <X size={24} />
+                  </button>
+                  
+                  <div className="flex flex-col items-center mb-6">
+                      <div className="w-20 h-20 bg-amber-400/20 rounded-full flex items-center justify-center mb-4">
+                          <Zap size={40} className="text-amber-400 fill-amber-400" />
+                      </div>
+                      <h2 className="text-white font-bold text-2xl">{user.zippers || 0} Zippers</h2>
+                      <p className="text-tg-secondary text-sm mt-1">Your current balance</p>
+                  </div>
+
+                  <button className="w-full py-3 bg-tg-accent rounded-xl text-white font-bold mb-3 shadow-lg">
+                      Buy Zippers
+                  </button>
+                  <button onClick={() => setShowBalance(false)} className="w-full py-3 text-tg-secondary hover:text-white font-medium">
+                      Close
+                  </button>
+              </div>
+          </div>
       )}
     </div>
   );

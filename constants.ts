@@ -45,12 +45,12 @@ export const MOCK_CHATS: Chat[] = [
     id: 'chat-news',
     user: NEWS_BOT_USER,
     lastMessage: {
-      id: 'n2',
+      id: 'update-v0012',
       senderId: 'news-bot',
       timestamp: '14:30',
       isRead: false,
       type: 'text',
-      text: 'Check out the new vibrant emoji animations! 🤩❤️'
+      text: '🚀 Update v0.0.1.2: Skidding fixed & new Zippers UI'
     },
     unreadCount: 1,
     type: 'channel',
@@ -86,18 +86,26 @@ export const MOCK_MESSAGES: Message[] = [
   {
     id: 'n1',
     senderId: 'news-bot',
-    timestamp: '14:29',
+    timestamp: '14:28',
     isRead: true,
-    type: 'image',
-    mediaUrl: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=1974&auto=format&fit=crop',
-    text: 'Welcome to HouseGram News! 📣\n\nWe are excited to announce our latest update version 2.0. We have completely redesigned the interface to match your favorite messaging experience.'
+    type: 'text',
+    text: '👋 **Welcome to HouseGram News!**'
   },
   {
     id: 'n2',
     senderId: 'news-bot',
+    timestamp: '14:29',
+    isRead: true,
+    type: 'video',
+    mediaUrl: 'https://v4.cdnpk.net/videvo_files/video/free/2019-05/large_watermarked/190516_06_Keyboard_05_preview.mp4',
+    text: '📅 **Feature Spotlight: Scheduling**\n\nPlan your messages perfectly. You can now schedule messages to be sent at a specific time.\n\n**How to use:**\n1. Type your message.\n2. **Long press** the Send button.\n3. Select "Schedule Message".'
+  },
+  {
+    id: 'n3',
+    senderId: 'news-bot',
     timestamp: '14:30',
     isRead: true,
     type: 'text',
-    text: '✨ New Features:\n\n• Live Emoji Animations: Send a single emoji (like ❤️ or 🤩) to see it come to life!\n• Profile Editor: Update your avatar and bio instantly.\n• Voice Messages: Record crystal clear audio.\n\nStay tuned for more updates!'
+    text: '🚀 **Update v0.0.1.2 Live Now!**\n\nWe heard your feedback about "skidding" media uploads.\n\n📸 **Fixed Skidding**: We implemented a new client-side compression engine. Photos now upload instantly without lagging the interface.\n\n💎 **Zippers Balance**: You can now view your exact Zippers balance directly in Settings.\n\n⚡ **Performance**: General stability improvements.\n\nUpdate is live automatically. Enjoy!'
   }
 ];

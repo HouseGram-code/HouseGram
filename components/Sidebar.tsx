@@ -1,10 +1,10 @@
 
 import React from 'react';
 import { 
-  User as UserIcon, Users, Megaphone, Search, Bookmark, 
-  Settings, UserPlus, Lock, PhoneCall, ShieldAlert
+  Users, Megaphone, User, Phone, Bookmark, 
+  Settings, UserPlus, ShieldAlert, Lock
 } from 'lucide-react';
-import { User } from '../types.ts';
+import { User as UserType } from '../types.ts';
 import { useLanguage } from '../LanguageContext.tsx';
 
 interface SidebarProps {
@@ -12,10 +12,11 @@ interface SidebarProps {
   onClose: () => void;
   onOpenProfile: () => void;
   onOpenAdmin?: () => void;
-  currentUser: User;
+  onOpenSavedMessages: () => void;
+  currentUser: UserType;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onOpenProfile, onOpenAdmin, currentUser }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onOpenProfile, onOpenAdmin, onOpenSavedMessages, currentUser }) => {
   const { t } = useLanguage();
   
   // Secret Check: Only show if email matches goh@gmail.com
@@ -23,72 +24,147 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onOpenProfile, onOpe
 
   return (
     <>
-      <div className={`fixed inset-0 bg-black/60 z-40 backdrop-blur-[1px] transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick={onClose} />
-      <div className={`fixed inset-y-0 left-0 w-[280px] bg-tg-sidebar z-50 transform transition-transform duration-300 ease-out ${isOpen ? 'translate-x-0' : '-translate-x-full'} border-r border-tg-border shadow-2xl flex flex-col h-full`}>
-        <div onClick={onOpenProfile} className="relative h-44 bg-[#1c242f] overflow-hidden p-5 flex flex-col justify-end cursor-pointer group hover:bg-[#232c3a] transition-colors shrink-0">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-tg-accent/5 rounded-full blur-3xl -mr-10 -mt-10" />
-          <div className="relative z-10 space-y-3">
-            <div className="relative inline-block">
-              {currentUser.avatarUrl ? (
-                currentUser.isVideoAvatar ? (
-                   <video src={currentUser.avatarUrl} autoPlay loop muted playsInline className="w-16 h-16 rounded-full object-cover border-2 border-white/5 shadow-lg" />
+      <div 
+        className={`fixed inset-0 bg-black/60 z-40 backdrop-blur-[2px] transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} 
+        onClick={onClose} 
+      />
+      {/* 
+         iPhone Complaint Fixes: 
+         1. w-[280px] to allow tapping backdrop on iPhone SE (320px width).
+         2. pt-safe in header to prevent status bar overlap.
+      */}
+      <div className={`fixed inset-y-0 left-0 w-[280px] bg-tg-sidebar z-50 transform transition-transform duration-300 ease-out ${isOpen ? 'translate-x-0' : '-translate-x-full'} shadow-2xl flex flex-col h-full border-r border-black/20`}>
+        
+        {/* Profile Header */}
+        <div 
+          onClick={onOpenProfile} 
+          className="relative min-h-[160px] bg-[#1c242f] px-6 pt-safe pb-6 flex flex-col justify-end cursor-pointer group hover:bg-[#232c3a] transition-colors shrink-0"
+        >
+          <div className="absolute top-0 right-0 w-40 h-40 bg-tg-accent/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none" />
+          
+          <div className="relative z-10 flex flex-col space-y-3 mt-4">
+            <div className="flex justify-between items-start">
+              <div className="relative inline-block">
+                {currentUser.avatarUrl ? (
+                  currentUser.isVideoAvatar ? (
+                     <video src={currentUser.avatarUrl} autoPlay loop muted playsInline className="w-[60px] h-[60px] rounded-full object-cover border-2 border-white/5 shadow-md" />
+                  ) : (
+                     <img src={currentUser.avatarUrl} alt={currentUser.name} className="w-[60px] h-[60px] rounded-full object-cover border-2 border-white/5 shadow-md" />
+                  )
                 ) : (
-                   <img src={currentUser.avatarUrl} alt={currentUser.name} className="w-16 h-16 rounded-full object-cover border-2 border-white/5 shadow-lg" />
-                )
-              ) : (
-                <div className={`w-16 h-16 rounded-full ${currentUser.avatarColor} border-2 border-white/5 flex items-center justify-center text-2xl font-bold text-white shadow-lg`}>{currentUser.name.charAt(0)}</div>
-              )}
-              <div className="absolute bottom-0 right-0 w-4 h-4 bg-tg-online border-[3px] border-[#1c242f] rounded-full" />
+                  <div className={`w-[60px] h-[60px] rounded-full ${currentUser.avatarColor} border-2 border-white/5 flex items-center justify-center text-2xl font-bold text-white shadow-md`}>
+                    {currentUser.name.charAt(0)}
+                  </div>
+                )}
+                <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-tg-online border-[2.5px] border-[#1c242f] rounded-full" />
+              </div>
             </div>
+
             <div className="flex flex-col">
-              <span className="text-white font-bold text-[17px] leading-tight group-hover:text-tg-accent transition-colors">{currentUser.name}</span>
-              <span className="text-tg-secondary text-sm font-medium">{currentUser.email || currentUser.phone}</span>
+              <span className="text-white font-bold text-[16px] tracking-wide group-hover:text-tg-accent transition-colors">
+                {currentUser.name}
+              </span>
+              <span className="text-tg-secondary text-[13px] font-medium truncate">
+                {currentUser.phone || currentUser.email}
+              </span>
             </div>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto no-scrollbar py-2 pb-safe">
-          <MenuItem icon={<UserIcon size={22} />} label={t('myProfile')} onClick={onOpenProfile} />
+        {/* Menu Items - Order matches user request */}
+        <div className="flex-1 overflow-y-auto no-scrollbar py-2 pb-safe bg-tg-sidebar">
+          
+          <MenuItem 
+            icon={<Users size={24} />} 
+            label={t('createGroup')} // Little men icon
+          />
+          <MenuItem 
+            icon={<Megaphone size={24} />} 
+            label={t('createChannel')} 
+          />
+          
+          <div className="my-2 border-b border-white/5 mx-4" />
+          
+          <MenuItem 
+            icon={<User size={24} />} 
+            label={t('contacts')} 
+            badge={<Badge text={t('soon')} locked />}
+          />
+          <MenuItem 
+            icon={<Phone size={24} />} 
+            label={t('calls')} 
+            badge={<Badge text={t('soon')} locked />}
+          />
+          <MenuItem 
+            icon={<Bookmark size={24} className="fill-current text-tg-accent" />} 
+            label={t('saved')} // "Favorites" in EN
+            onClick={onOpenSavedMessages}
+            activeColor="text-tg-accent"
+          />
+          <MenuItem 
+            icon={<Settings size={24} />} 
+            label={t('settings')} 
+            onClick={onOpenProfile} 
+          />
+
+          <div className="my-2 border-b border-white/5 mx-4" />
+
+          <MenuItem 
+            icon={<UserPlus size={24} />} 
+            label={t('invite')} 
+            badge={<Badge text={t('soon')} />}
+          />
           
           {/* Secret Admin Button */}
           {isAdmin && onOpenAdmin && (
              <MenuItem 
-                icon={<ShieldAlert size={22} className="text-red-500" />} 
+                icon={<ShieldAlert size={24} className="text-red-500" />} 
                 label="Admin Panel" 
                 onClick={onOpenAdmin}
                 badge={<Badge text="GOD MODE" color="text-red-500 border-red-500/30 bg-red-500/10" />}
              />
           )}
-
-          <div className="mx-4 my-2 border-b border-tg-border/50" />
-          <MenuItem icon={<Users size={22} />} label={t('createGroup')} badge={<Badge text={t('soon')} />} />
-          <MenuItem icon={<Megaphone size={22} />} label={t('createChannel')} badge={<Badge text={t('soon')} />} />
-          <MenuItem icon={<UserIcon size={22} />} label={t('contacts')} badge={<Badge text={t('soon')} locked />} />
-          <MenuItem icon={<PhoneCall size={22} />} label={t('calls')} badge={<Badge text={t('soon')} locked />} />
-          <MenuItem icon={<Bookmark size={22} />} label={t('saved')} badge={<Badge text={t('soon')} />} />
-          <MenuItem icon={<Settings size={22} />} label={t('settings')} onClick={onOpenProfile} />
-          <div className="mx-4 my-2 border-b border-tg-border/50" />
-          <MenuItem icon={<UserPlus size={22} />} label={t('invite')} badge={<Badge text={t('soon')} />} />
+          
+          <div className="mt-auto pt-4 pb-6 px-6">
+             <div className="text-[11px] text-tg-secondary/40 font-medium">
+                HouseGram Web v0.0.1.2
+             </div>
+          </div>
         </div>
       </div>
     </>
   );
 };
 
-const MenuItem: React.FC<{ icon: React.ReactNode; label: string; badge?: React.ReactNode; onClick?: () => void }> = ({ icon, label, badge, onClick }) => (
-  <div onClick={onClick} className="flex items-center px-4 py-3 space-x-6 hover:bg-white/5 cursor-pointer transition-all group">
-    <div className="text-tg-secondary group-hover:text-tg-accent transition-colors duration-200">{icon}</div>
+interface MenuItemProps {
+  icon: React.ReactNode;
+  label: string;
+  badge?: React.ReactNode;
+  onClick?: () => void;
+  activeColor?: string;
+}
+
+const MenuItem: React.FC<MenuItemProps> = ({ icon, label, badge, onClick, activeColor }) => (
+  <div 
+    onClick={onClick} 
+    className="flex items-center px-6 py-3.5 space-x-6 hover:bg-white/5 cursor-pointer transition-all group active:bg-white/10"
+  >
+    <div className={`${activeColor ? activeColor : 'text-tg-secondary group-hover:text-white'} transition-colors duration-200`}>
+      {icon}
+    </div>
     <div className="flex-1 flex justify-between items-center min-w-0">
-      <span className="text-white/90 font-medium truncate pr-2 group-hover:text-white">{label}</span>
+      <span className="text-white font-medium text-[15px] group-hover:translate-x-1 transition-transform duration-200">
+        {label}
+      </span>
       {badge}
     </div>
   </div>
 );
 
 const Badge: React.FC<{ text: string; locked?: boolean; color?: string }> = ({ text, locked, color }) => (
-  <div className={`flex items-center space-x-1 px-2 py-0.5 rounded-[4px] border shadow-[0_2px_8px_rgba(42,171,238,0.1)] transition-transform group-hover:scale-105 ${color || 'bg-tg-accent/10 border-tg-accent/20 text-tg-accent'}`}>
-    {locked && <Lock size={10} className="opacity-70" />}
-    <span className="tracking-wide text-[10px] font-bold">{text}</span>
+  <div className={`flex items-center space-x-1 px-1.5 py-0.5 rounded-[4px] border transition-transform group-hover:scale-105 ${color || 'bg-tg-accent/10 border-tg-accent/20 text-tg-accent'}`}>
+    {locked && <Lock size={9} className="opacity-70" />}
+    <span className="text-[10px] font-bold uppercase tracking-wider">{text}</span>
   </div>
 );
 

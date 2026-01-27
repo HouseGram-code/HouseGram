@@ -1,9 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
-import { Check, CheckCheck, Mic, ShieldCheck, BadgeCheck } from 'lucide-react';
+import { Check, CheckCheck, Mic, ShieldCheck, BadgeCheck, Bookmark } from 'lucide-react';
 import { Chat, isUserOnline, User } from '../types.ts';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase.ts';
+import { useLanguage } from '../LanguageContext.tsx';
 
 interface ChatItemProps {
   chat: Chat;
@@ -12,12 +13,16 @@ interface ChatItemProps {
 }
 
 const ChatItem: React.FC<ChatItemProps> = ({ chat, onClick, currentUser }) => {
+  const { t } = useLanguage();
   // Use local state to track the live user object, initialized with the passed prop
   const [liveUser, setLiveUser] = useState<User>(chat.user);
+  const [isTyping, setIsTyping] = useState(false);
+
+  const isSavedMessages = currentUser && chat.id === `saved_${currentUser.id}`;
 
   // Subscribe to the specific user's document to get real-time status/heartbeat updates
   useEffect(() => {
-    if (!chat.user.id || chat.user.id === 'news-bot') return;
+    if (!chat.user.id || chat.user.id === 'news-bot' || isSavedMessages) return;
 
     const userRef = doc(db, "users", chat.user.id);
     const unsubscribe = onSnapshot(userRef, (docSnap) => {
@@ -27,9 +32,21 @@ const ChatItem: React.FC<ChatItemProps> = ({ chat, onClick, currentUser }) => {
     });
 
     return () => unsubscribe();
-  }, [chat.user.id]);
+  }, [chat.user.id, isSavedMessages]);
 
-  const isOnline = isUserOnline(liveUser, currentUser);
+  // Check typing status from chat prop (which comes from Firestore)
+  useEffect(() => {
+      if (chat.typing && !isSavedMessages && chat.user.id) {
+          const typingTime = chat.typing[chat.user.id];
+          if (typingTime && Date.now() - typingTime < 4000) {
+              setIsTyping(true);
+              return;
+          }
+      }
+      setIsTyping(false);
+  }, [chat.typing, chat.user.id, isSavedMessages]);
+
+  const isOnline = !isSavedMessages && isUserOnline(liveUser, currentUser);
 
   return (
     <div 
@@ -38,17 +55,24 @@ const ChatItem: React.FC<ChatItemProps> = ({ chat, onClick, currentUser }) => {
     >
       {/* Avatar with Glowy Online Indicator */}
       <div className="relative flex-shrink-0">
-        <div className={`w-[54px] h-[54px] rounded-full ${liveUser.avatarColor} flex items-center justify-center text-xl font-bold text-white shadow-md transform group-hover:scale-[1.03] transition-transform duration-300 overflow-hidden`}>
-          {liveUser.avatarUrl ? (
-             liveUser.isVideoAvatar ? (
-                <video src={liveUser.avatarUrl} autoPlay loop muted playsInline className="w-full h-full object-cover" />
-             ) : (
-                <img src={liveUser.avatarUrl} alt="" className="w-full h-full object-cover" />
-             )
-          ) : (
-            liveUser.name.charAt(0)
-          )}
-        </div>
+        {isSavedMessages ? (
+            <div className="w-[54px] h-[54px] rounded-full bg-tg-accent flex items-center justify-center shadow-md transform group-hover:scale-[1.03] transition-transform duration-300">
+                <Bookmark size={28} className="text-white" fill="white" />
+            </div>
+        ) : (
+            <div className={`w-[54px] h-[54px] rounded-full ${liveUser.avatarColor} flex items-center justify-center text-xl font-bold text-white shadow-md transform group-hover:scale-[1.03] transition-transform duration-300 overflow-hidden`}>
+            {liveUser.avatarUrl ? (
+                liveUser.isVideoAvatar ? (
+                    <video src={liveUser.avatarUrl} autoPlay loop muted playsInline className="w-full h-full object-cover" />
+                ) : (
+                    <img src={liveUser.avatarUrl} alt="" className="w-full h-full object-cover" />
+                )
+            ) : (
+                liveUser.name.charAt(0)
+            )}
+            </div>
+        )}
+        
         {isOnline && (
           <div className="absolute bottom-0 right-0 w-[15px] h-[15px] bg-tg-online border-[3.5px] border-tg-bg rounded-full shadow-[0_0_8px_rgba(77,217,100,0.5)]" />
         )}
@@ -58,23 +82,40 @@ const ChatItem: React.FC<ChatItemProps> = ({ chat, onClick, currentUser }) => {
       <div className="ml-4 flex-1 min-w-0 border-b border-tg-border/30 pb-2.5 group-last:border-none">
         <div className="flex justify-between items-baseline mb-0.5">
           <h3 className="text-[16px] font-bold text-white truncate pr-2 group-hover:text-tg-accent transition-colors flex items-center">
-            {liveUser.name}
-            {liveUser.isAdmin ? (
-               <ShieldCheck size={14} className="ml-1 text-amber-500" fill="currentColor" stroke="black" strokeWidth={1} />
-            ) : liveUser.isOfficial ? (
-               <BadgeCheck size={14} className="ml-1 text-blue-500" fill="#2AABEE" stroke="white" />
-            ) : null}
+            {isSavedMessages ? t('saved') : liveUser.name}
+            {!isSavedMessages && (
+                <>
+                    {liveUser.isAdmin ? (
+                    <ShieldCheck size={14} className="ml-1 text-amber-500" fill="currentColor" stroke="black" strokeWidth={1} />
+                    ) : liveUser.isOfficial ? (
+                    <BadgeCheck size={14} className="ml-1 text-blue-500" fill="#2AABEE" stroke="white" />
+                    ) : null}
+                </>
+            )}
           </h3>
-          <span className="text-[12px] text-tg-secondary whitespace-nowrap font-medium opacity-80">
-            {chat.lastMessage.timestamp}
+          <span className={`text-[12px] whitespace-nowrap font-medium opacity-80 ${isTyping ? 'text-tg-accent animate-pulse' : 'text-tg-secondary'}`}>
+             {isTyping ? '...' : chat.lastMessage.timestamp}
           </span>
         </div>
         <div className="flex justify-between items-center">
           <div className="flex items-center space-x-1.5 min-w-0">
-             {chat.lastMessage.type === 'voice' && <Mic size={14} className="text-tg-accent flex-shrink-0" />}
-             <p className={`text-[14px] truncate leading-tight ${chat.unreadCount > 0 ? 'text-white/90 font-medium' : 'text-tg-secondary'}`}>
-               {chat.lastMessage.text || (chat.lastMessage.type === 'voice' ? 'Голосовое сообщение' : '')}
-             </p>
+             {isTyping ? (
+                 <p className="text-[14px] text-tg-accent font-medium leading-tight animate-pulse flex items-center">
+                    typing
+                    <span className="flex space-x-0.5 items-end ml-1 mb-0.5">
+                       <span className="w-1 h-1 bg-tg-accent rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                       <span className="w-1 h-1 bg-tg-accent rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                       <span className="w-1 h-1 bg-tg-accent rounded-full animate-bounce"></span>
+                    </span>
+                 </p>
+             ) : (
+                 <>
+                    {chat.lastMessage.type === 'voice' && <Mic size={14} className="text-tg-accent flex-shrink-0" />}
+                    <p className={`text-[14px] truncate leading-tight ${chat.unreadCount > 0 ? 'text-white/90 font-medium' : 'text-tg-secondary'}`}>
+                    {chat.lastMessage.text || (chat.lastMessage.type === 'voice' ? 'Voice Message' : '')}
+                    </p>
+                 </>
+             )}
           </div>
           
           <div className="flex items-center space-x-1 ml-2">
@@ -83,9 +124,11 @@ const ChatItem: React.FC<ChatItemProps> = ({ chat, onClick, currentUser }) => {
                 {chat.unreadCount}
               </div>
             ) : (
-              <div className="text-tg-accent/60 group-hover:text-tg-accent transition-colors">
-                {chat.lastMessage.isRead ? <CheckCheck size={18} /> : <Check size={18} />}
-              </div>
+              !isTyping && (
+                  <div className="text-tg-accent/60 group-hover:text-tg-accent transition-colors">
+                    {chat.lastMessage.isRead ? <CheckCheck size={18} /> : <Check size={18} />}
+                  </div>
+              )
             )}
           </div>
         </div>

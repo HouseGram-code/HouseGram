@@ -1,11 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
-import { Check, CheckCheck, FileText } from 'lucide-react';
+import { Check, CheckCheck, FileText, Gift as GiftIcon, Zap, User as UserIcon } from 'lucide-react';
 import { Message } from '../types.ts';
 
 interface MessageBubbleProps {
   message: Message;
   isOutgoing: boolean;
+  onViewGift?: (msg: Message) => void;
 }
 
 // Helper to determine if text contains only emojis and how many
@@ -165,10 +166,11 @@ const Dart: React.FC<{ value: number }> = ({ value }) => {
     );
 };
 
-const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOutgoing }) => {
+const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOutgoing, onViewGift }) => {
   const [animKey, setAnimKey] = useState(0);
   const isMedia = message.type === 'image' || message.type === 'video';
   const isFile = message.type === 'file';
+  const isGift = message.type === 'gift' && message.giftData;
 
   // Check for Big Emoji condition
   const emojiCount = (message.type === 'text' && message.text) ? getEmojiCount(message.text) : 0;
@@ -181,7 +183,6 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOutgoing }) =>
   // Interactive Emoji Logic
   if (message.interactiveEmoji) {
       const { type, value } = message.interactiveEmoji;
-      
       return (
         <div className={`relative px-2 py-1 group ${isOutgoing ? 'ml-auto' : 'mr-auto'}`}>
             <div className="animate-emoji-pop origin-center cursor-pointer" onClick={triggerAnim} key={animKey}>
@@ -201,11 +202,57 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOutgoing }) =>
       );
   }
 
+  // --- GIFT MESSAGE BUBBLE ---
+  if (isGift && message.giftData) {
+      return (
+        <div 
+            onClick={() => onViewGift && onViewGift(message)}
+            className={`cursor-pointer relative w-[180px] rounded-2xl shadow-xl animate-fadeIn overflow-hidden ${isOutgoing ? 'ml-auto' : 'mr-auto'} border border-white/10 bg-[#17212B] hover:scale-[1.02] transition-transform duration-200 active:scale-95`}
+        >
+            {/* Gift Background Glow */}
+            <div className="absolute inset-0 opacity-40" style={{ backgroundColor: message.giftData.backgroundColor || '#2b2b2b' }} />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent z-0" />
+            
+            <div className="relative z-10 flex flex-col items-center p-3 pt-6 pb-4">
+                
+                {/* Simplified Header - Just a tiny hint or remove completely. Keeping subtle text */}
+                <div className="absolute top-2 left-0 right-0 text-center">
+                    <span className="text-[9px] font-bold uppercase tracking-widest text-tg-accent/80">
+                        {message.giftData.isAnonymous ? 'Gift' : 'Gift'}
+                    </span>
+                </div>
+
+                {/* Gift Image with Float Animation */}
+                <div className="w-24 h-24 mb-2 filter drop-shadow-[0_5px_15px_rgba(0,0,0,0.5)] animate-plane-float">
+                    <img src={message.giftData.imageUrl} alt={message.giftData.name} className="w-full h-full object-contain" />
+                </div>
+                
+                {/* Gift Name & Price */}
+                <div className="text-center">
+                    <div className="inline-flex items-center space-x-1 bg-white/10 px-2 py-0.5 rounded-full">
+                        <span className="text-amber-400 font-bold text-xs">{message.giftData.price}</span>
+                        <Zap size={10} className="text-amber-400 fill-amber-400" />
+                    </div>
+                </div>
+            </div>
+
+            {/* Meta */}
+            <div className="absolute bottom-2 right-2 flex items-center space-x-1 select-none pointer-events-none opacity-60 z-20">
+                <span className="text-[9px] font-medium text-white/90 shadow-sm">{message.timestamp}</span>
+                {isOutgoing && (
+                    <div className="text-white/90 shadow-sm">
+                    {message.isRead ? <CheckCheck size={10} /> : <Check size={10} />}
+                    </div>
+                )}
+            </div>
+        </div>
+      );
+  }
+
   if (isBigEmoji) {
      const fontSize = emojiCount === 1 ? 'text-[80px]' : emojiCount === 2 ? 'text-[60px]' : 'text-[45px]';
      const gap = emojiCount === 1 ? 'leading-tight' : 'leading-snug';
      
-     // Determine specific animation for single emoji
      let idleAnimation = '';
      if (emojiCount === 1 && message.text) {
         if (message.text.includes('❤️') || message.text.includes('🧡') || message.text.includes('💛') || message.text.includes('💚') || message.text.includes('💙') || message.text.includes('💜')) {

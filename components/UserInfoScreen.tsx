@@ -2,12 +2,10 @@
 import React, { useState, useRef } from 'react';
 import { 
   ArrowLeft, Info, AtSign, Mail, 
-  MessageCircle, Ban, Trash2, ShieldCheck, BadgeCheck, ShieldAlert
+  MessageCircle, Ban, Trash2, ShieldCheck, BadgeCheck, ShieldAlert, Bookmark, Star, Image, FileText, Link, Zap, User as UserIcon, Calendar, X
 } from 'lucide-react';
-import { User, formatLastSeen } from '../types.ts';
+import { User, formatLastSeen, Gift } from '../types.ts';
 import { useLanguage } from '../LanguageContext.tsx';
-import { ME } from '../constants.ts';
-import { auth } from '../firebase.ts'; // Import auth to get current user ID if needed, but better to pass prop if available. 
 
 interface UserInfoScreenProps {
   user: User;
@@ -15,14 +13,18 @@ interface UserInfoScreenProps {
   onBack: () => void;
   onBlock: () => void;
   onDelete: () => void;
-  currentUser: User; // Added prop
+  currentUser: User; 
 }
 
 const UserInfoScreen: React.FC<UserInfoScreenProps> = ({ user, isBlocked, onBack, onBlock, onDelete, currentUser }) => {
   const { t } = useLanguage();
+  const [activeTab, setActiveTab] = useState<'gifts' | 'media' | 'files' | 'links'>('gifts');
   const [isScrolled, setIsScrolled] = useState(false);
   const [modal, setModal] = useState<'block' | 'delete' | null>(null);
+  const [viewingGift, setViewingGift] = useState<Gift | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const isSavedMessages = user.id === currentUser.id;
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     setIsScrolled(e.currentTarget.scrollTop > 50);
@@ -35,16 +37,14 @@ const UserInfoScreen: React.FC<UserInfoScreenProps> = ({ user, isBlocked, onBack
   };
 
   const renderStatus = () => {
+    if (isSavedMessages) return t('cloudStorage'); 
     if (isBlocked) return t('offline');
     if (user.status === 'typing') return t('typing');
     return formatLastSeen(user, t, currentUser);
   };
 
-  // Function to mask email
   const getDisplayEmail = (email: string) => {
     if (user.id === 'me' || user.email === 'goh@gmail.com') return email;
-    
-    // Simple mask: first 2 chars + *** + domain
     const atIndex = email.indexOf('@');
     if (atIndex < 0) return email;
     if (atIndex <= 2) return `***${email.slice(atIndex)}`;
@@ -64,10 +64,7 @@ const UserInfoScreen: React.FC<UserInfoScreenProps> = ({ user, isBlocked, onBack
             <h3 className="text-white text-lg font-bold mb-2">
               {modal === 'block' ? (isBlocked ? t('unblockUser') : t('confirmBlockTitle')) : t('confirmDeleteTitle')}
             </h3>
-            <p className="text-tg-secondary text-sm mb-6 leading-relaxed">
-              {modal === 'block' ? (isBlocked ? `Are you sure you want to unblock ${user.name}?` : t('confirmBlockDesc')) : t('confirmDeleteDesc')}
-            </p>
-            <div className="flex flex-col space-y-2">
+            <div className="flex flex-col space-y-2 mt-6">
               <button 
                 onClick={confirmAction}
                 className={`w-full py-3 rounded-xl font-bold transition-all ${modal === 'delete' || (modal === 'block' && !isBlocked) ? 'bg-red-500 text-white' : 'bg-tg-accent text-white'}`}
@@ -85,6 +82,81 @@ const UserInfoScreen: React.FC<UserInfoScreenProps> = ({ user, isBlocked, onBack
         </div>
       )}
 
+      {/* VIEW GIFT DETAILS MODAL (Duplicate from ChatScreen basically but for Gift object) */}
+      {viewingGift && (
+          <div className="fixed inset-0 z-[110] flex flex-col bg-black/90 animate-fadeIn justify-center items-center p-4">
+              <div className="bg-[#1c242f] w-full max-w-sm rounded-2xl border border-white/10 relative shadow-2xl animate-form-entrance overflow-hidden">
+                  <div className="relative h-48 flex items-center justify-center bg-gradient-to-b from-[#2a2a2a] to-[#1c242f]">
+                      <div className="absolute inset-0 opacity-30" style={{ backgroundColor: viewingGift.backgroundColor }} />
+                      <div className="w-32 h-32 relative z-10 animate-plane-float filter drop-shadow-2xl">
+                          <img src={viewingGift.imageUrl} alt="Gift" className="w-full h-full object-contain" />
+                      </div>
+                      <button onClick={() => setViewingGift(null)} className="absolute top-4 right-4 p-2 bg-black/20 hover:bg-black/40 rounded-full text-white/70 hover:text-white transition-colors z-20">
+                          <X size={20} />
+                      </button>
+                  </div>
+
+                  <div className="p-6">
+                      <h2 className="text-white font-bold text-2xl text-center mb-1">{viewingGift.name}</h2>
+                      {viewingGift.comment && (
+                          <p className="text-tg-secondary text-sm text-center italic mb-6">"{viewingGift.comment}"</p>
+                      )}
+                      
+                      <div className="space-y-4">
+                          <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
+                              <div className="flex items-center space-x-3">
+                                  <div className="w-10 h-10 rounded-full bg-tg-accent/20 flex items-center justify-center text-tg-accent">
+                                      <UserIcon size={20} />
+                                  </div>
+                                  <div>
+                                      <p className="text-xs text-tg-secondary uppercase font-bold">From</p>
+                                      <p className="text-white font-medium">
+                                          {viewingGift.isAnonymous ? "Anonymous" : (viewingGift.fromUserName || "Unknown User")}
+                                      </p>
+                                  </div>
+                              </div>
+                          </div>
+
+                          {viewingGift.timestamp && (
+                              <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
+                                  <div className="flex items-center space-x-3">
+                                      <div className="w-10 h-10 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center">
+                                          <Calendar size={20} />
+                                      </div>
+                                      <div>
+                                          <p className="text-xs text-tg-secondary uppercase font-bold">Date</p>
+                                          <p className="text-white font-medium">
+                                              {new Date(viewingGift.timestamp).toLocaleDateString()} at {new Date(viewingGift.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                          </p>
+                                      </div>
+                                  </div>
+                              </div>
+                          )}
+
+                          <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
+                              <div className="flex items-center space-x-3">
+                                  <div className="w-10 h-10 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center">
+                                      <Zap size={20} className="fill-current" />
+                                  </div>
+                                  <div>
+                                      <p className="text-xs text-tg-secondary uppercase font-bold">Value</p>
+                                      <p className="text-white font-medium">{viewingGift.price} Zippers</p>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+
+                      <button 
+                        onClick={() => setViewingGift(null)}
+                        className="w-full mt-6 py-3 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl transition-colors"
+                      >
+                          Close
+                      </button>
+                  </div>
+              </div>
+          </div>
+      )}
+
       {/* Dynamic Header */}
       <div className={`fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 pb-2 pt-safe transition-all duration-300 min-h-[60px] h-auto ${isScrolled ? 'bg-tg-sidebar shadow-lg border-b border-tg-border' : 'bg-transparent'}`}>
         <div className="flex items-center space-x-3">
@@ -93,12 +165,7 @@ const UserInfoScreen: React.FC<UserInfoScreenProps> = ({ user, isBlocked, onBack
           </button>
           <div className={`flex flex-col transition-opacity duration-300 ${isScrolled ? 'opacity-100' : 'opacity-0'}`}>
             <span className="text-white font-bold text-[17px] flex items-center">
-              {user.name}
-              {user.isAdmin ? (
-                <ShieldCheck size={14} className="ml-1 text-amber-500" fill="currentColor" stroke="black" strokeWidth={1} />
-              ) : user.isOfficial ? (
-                <BadgeCheck size={14} className="ml-1 text-blue-500" fill="#2AABEE" stroke="white" />
-              ) : null}
+              {isSavedMessages ? t('saved') : user.name}
             </span>
             <span className={`${isOnline ? 'text-tg-online' : 'text-tg-secondary'} text-[12px]`}>
               {statusText}
@@ -115,8 +182,10 @@ const UserInfoScreen: React.FC<UserInfoScreenProps> = ({ user, isBlocked, onBack
         {/* Profile Header Block */}
         <div className="relative pt-24 pb-8 flex flex-col items-center bg-tg-sidebar shadow-md">
            <div className="relative group">
-            <div className={`w-32 h-32 md:w-40 md:h-40 rounded-full flex items-center justify-center text-5xl font-bold text-white shadow-2xl overflow-hidden border-4 border-[#1c2733] transform transition-transform group-hover:scale-[1.02] ${!user.avatarUrl ? user.avatarColor : ''}`}>
-              {user.avatarUrl ? (
+            <div className={`w-32 h-32 md:w-40 md:h-40 rounded-full flex items-center justify-center text-5xl font-bold text-white shadow-2xl overflow-hidden border-4 border-[#1c2733] transform transition-transform group-hover:scale-[1.02] ${!user.avatarUrl ? (isSavedMessages ? 'bg-tg-accent' : user.avatarColor) : ''}`}>
+              {isSavedMessages ? (
+                 <Bookmark size={60} className="text-white" fill="white" />
+              ) : user.avatarUrl ? (
                  user.isVideoAvatar ? (
                     <video src={user.avatarUrl} autoPlay loop muted playsInline className="w-full h-full object-cover" />
                  ) : (
@@ -126,19 +195,14 @@ const UserInfoScreen: React.FC<UserInfoScreenProps> = ({ user, isBlocked, onBack
                 user.name.charAt(0)
               )}
             </div>
-            {!isBlocked && isOnline && (
+            {!isSavedMessages && !isBlocked && isOnline && (
               <div className="absolute bottom-2 right-2 w-6 h-6 bg-tg-online border-4 border-tg-sidebar rounded-full shadow-lg" />
-            )}
-            {isBlocked && (
-              <div className="absolute bottom-2 right-2 w-8 h-8 bg-red-500 border-4 border-tg-sidebar rounded-full shadow-lg flex items-center justify-center">
-                <Ban size={14} className="text-white" />
-              </div>
             )}
           </div>
           <div className="mt-4 text-center px-6">
             <h2 className="text-white text-2xl font-black tracking-tight flex items-center justify-center">
-                {user.name}
-                {user.isAdmin && (
+                {isSavedMessages ? t('saved') : user.name}
+                {!isSavedMessages && user.isAdmin && (
                     <div className="ml-2 bg-amber-500/10 border border-amber-500/20 rounded-full p-1" title="Administrator">
                          <ShieldCheck size={20} className="text-amber-500" />
                     </div>
@@ -156,34 +220,21 @@ const UserInfoScreen: React.FC<UserInfoScreenProps> = ({ user, isBlocked, onBack
 
         {/* Info Items Section */}
         <div className="mt-4 bg-tg-sidebar border-y border-tg-border space-y-0.5">
-           {/* Admin Badge Info Row */}
-           {user.isAdmin && (
-             <div className="px-5 py-4 flex items-center space-x-6 bg-amber-500/5">
-                <div className="flex-shrink-0">
-                    <ShieldAlert size={22} className="text-amber-500" />
-                </div>
-                <div className="flex-1 flex flex-col min-w-0">
-                    <span className="text-amber-500 text-[16px] font-bold">Administrator</span>
-                    <span className="text-[12px] text-tg-secondary font-bold uppercase tracking-wider">Role</span>
-                </div>
-             </div>
-           )}
-
-           {user.email && (
+           {!isSavedMessages && user.email && (
              <InfoItem 
                icon={<Mail size={22} className="text-tg-accent" />} 
                value={getDisplayEmail(user.email)} 
                label={t('email')} 
              />
            )}
-          {user.username && (
+          {!isSavedMessages && user.username && (
             <InfoItem 
               icon={<AtSign size={22} className="text-tg-accent" />} 
               value={`@${user.username.replace('@', '')}`} 
               label={t('username')} 
             />
           )}
-          {user.bio && (
+          {!isSavedMessages && user.bio && (
             <InfoItem 
               icon={<Info size={22} className="text-tg-accent" />} 
               value={user.bio} 
@@ -192,8 +243,58 @@ const UserInfoScreen: React.FC<UserInfoScreenProps> = ({ user, isBlocked, onBack
           )}
         </div>
 
-        {/* Action List - Hidden for Official/Admin Accounts */}
-        {!user.isOfficial && !user.isAdmin && (
+        {/* TABS SECTION (Gifts, Media, etc) */}
+        {!isSavedMessages && (
+            <div className="mt-4 bg-tg-sidebar border-y border-tg-border min-h-[300px]">
+                {/* Tabs Header */}
+                <div className="flex border-b border-tg-border/50">
+                    <TabButton active={activeTab === 'gifts'} label="Gifts" icon={<Star size={16} />} onClick={() => setActiveTab('gifts')} />
+                    <TabButton active={activeTab === 'media'} label="Media" icon={<Image size={16} />} onClick={() => setActiveTab('media')} />
+                    <TabButton active={activeTab === 'files'} label="Files" icon={<FileText size={16} />} onClick={() => setActiveTab('files')} />
+                    <TabButton active={activeTab === 'links'} label="Links" icon={<Link size={16} />} onClick={() => setActiveTab('links')} />
+                </div>
+
+                {/* Tab Content */}
+                <div className="p-4">
+                    {activeTab === 'gifts' && (
+                        <div className="grid grid-cols-3 gap-3">
+                            {user.gifts && user.gifts.length > 0 ? (
+                                user.gifts.map((gift, idx) => (
+                                    <div 
+                                        key={`${gift.id}-${idx}`} 
+                                        onClick={() => setViewingGift(gift)}
+                                        className="bg-[#242f3d] rounded-xl p-2 flex flex-col items-center relative overflow-hidden group shadow-lg cursor-pointer hover:bg-[#2b3849] transition-all hover:scale-105 active:scale-95"
+                                    >
+                                        <div className="absolute inset-0 opacity-20" style={{ backgroundColor: gift.backgroundColor }} />
+                                        <img src={gift.imageUrl} className="w-12 h-12 object-contain relative z-10 mb-1" alt={gift.name} />
+                                        <div className="flex items-center space-x-1 bg-black/20 rounded-full px-2 py-0.5 relative z-10">
+                                            <span className="text-[10px] text-amber-400 font-bold">{gift.price}</span>
+                                            <Star size={8} className="text-amber-400 fill-amber-400" />
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="col-span-3 py-8 flex flex-col items-center justify-center text-center opacity-50 space-y-2">
+                                    <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center">
+                                        <Star size={32} className="text-tg-secondary" />
+                                    </div>
+                                    <p className="text-tg-secondary text-sm">No gifts yet.</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    
+                    {activeTab !== 'gifts' && (
+                        <div className="py-10 text-center opacity-40">
+                            <p className="text-sm text-tg-secondary">No items found</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+        )}
+
+        {/* Action List */}
+        {!isSavedMessages && !user.isOfficial && !user.isAdmin && (
             <div className="mt-4 bg-tg-sidebar border-y border-tg-border">
             <SettingsLink 
                 icon={<Ban size={22} className={isBlocked ? "text-tg-accent" : "text-red-500"} />} 
@@ -210,16 +311,22 @@ const UserInfoScreen: React.FC<UserInfoScreenProps> = ({ user, isBlocked, onBack
             </div>
         )}
         
-        <div className="mt-8 px-6 flex items-center justify-center space-x-2 text-tg-secondary/30">
-           <ShieldCheck size={14} />
-           <span className="text-[11px] font-medium tracking-widest uppercase">Encryption Enabled</span>
-        </div>
-
         <div className="h-20" />
       </div>
     </div>
   );
 };
+
+const TabButton: React.FC<{ active: boolean; label: string; icon: React.ReactNode; onClick: () => void }> = ({ active, label, icon, onClick }) => (
+    <button 
+        onClick={onClick}
+        className={`flex-1 py-3 flex flex-col items-center justify-center space-y-1 relative transition-colors ${active ? 'text-tg-accent' : 'text-tg-secondary hover:text-white'}`}
+    >
+        {icon}
+        <span className="text-[10px] font-bold uppercase tracking-wider">{label}</span>
+        {active && <div className="absolute bottom-0 w-full h-[2px] bg-tg-accent" />}
+    </button>
+);
 
 const ActionButton: React.FC<{ icon: React.ReactNode; label?: string; onClick?: () => void; color?: string }> = ({ icon, onClick, color }) => (
   <button 
@@ -235,7 +342,7 @@ const InfoItem: React.FC<{ icon: React.ReactNode; value: string; label: string }
     <div className="flex-shrink-0 group-hover:scale-110 transition-transform">{icon}</div>
     <div className="flex-1 flex flex-col min-w-0">
       <span className="text-white text-[16px] font-medium truncate">{value}</span>
-      <span className="text-[12px] text-tg-secondary font-bold uppercase tracking-wider">{label}</span>
+      <span className="text--[12px] text-tg-secondary font-bold uppercase tracking-wider">{label}</span>
     </div>
   </div>
 );

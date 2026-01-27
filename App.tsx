@@ -15,6 +15,7 @@ import GuideScreen from './components/GuideScreen.tsx';
 import DataStorageScreen from './components/DataStorageScreen.tsx';
 import AdminPanel from './components/AdminPanel.tsx';
 import SnowEffect from './components/SnowEffect.tsx';
+import MaintenanceScreen from './components/MaintenanceScreen.tsx';
 import { LanguageProvider } from './LanguageContext.tsx';
 import { auth, db } from './firebase.ts';
 import { onAuthStateChanged } from "firebase/auth";
@@ -25,34 +26,50 @@ const AppContent: React.FC = () => {
   const [screen, setScreen] = useState<AppScreen>(AppScreen.AUTH);
   const [isLoading, setIsLoading] = useState(true);
   const [snowEnabled, setSnowEnabled] = useState(false);
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
 
   // --- Real Persistent Storage Stats ---
   const [storageStats, setStorageStats] = useState<StorageStats>(() => {
-    const saved = localStorage.getItem('hg_storage_stats');
-    if (saved) return JSON.parse(saved);
-    return {
-      media: 0,
-      files: 0,
-      voice: 0,
-      total: 0
-    };
+    try {
+        const saved = localStorage.getItem('hg_storage_stats');
+        if (saved) return JSON.parse(saved);
+    } catch (e) {
+        console.error("Failed to load storage stats", e);
+    }
+    return { media: 0, files: 0, voice: 0, total: 0 };
   });
 
-  // Listen for Global Snow Setting
+  // Listen for Global System Settings
   useEffect(() => {
-    const unsub = onSnapshot(doc(db, 'system', 'settings'), (doc) => {
-        if (doc.exists()) {
-            setSnowEnabled(doc.data()?.snowEnabled || false);
-        }
-    });
-    return () => unsub();
+    try {
+      const unsub = onSnapshot(doc(db, 'system', 'settings'), (doc) => {
+          if (doc.exists()) {
+              const data = doc.data();
+              setSnowEnabled(data?.snowEnabled || false);
+              setMaintenanceMode(data?.maintenanceMode || false);
+          }
+      }, (error) => {
+        // Silent fail for system settings if offline/permission denied
+        console.log("System settings sync paused:", error.code);
+      });
+      return () => unsub();
+    } catch (e) {
+      return () => {};
+    }
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('hg_storage_stats', JSON.stringify(storageStats));
+    try {
+        localStorage.setItem('hg_storage_stats', JSON.stringify(storageStats));
+    } catch (e) {
+        console.error("Failed to save storage stats", e);
+    }
   }, [storageStats]);
 
   const handleFileUpload = (size: number, category: 'media' | 'files' | 'voice') => {
+    // Ensure size is a valid number to prevent data corruption
+    if (typeof size !== 'number' || isNaN(size)) return;
+    
     setStorageStats(prev => ({
       ...prev,
       [category]: prev[category] + size,
@@ -130,93 +147,99 @@ const AppContent: React.FC = () => {
   }, [currentUser?.id]);
 
 
-  // --- Real Firebase Auth Listener ---
+  // --- Optimized Auth & User Profile Listener ---
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    let userUnsubscribe: (() => void) | null = null;
+
+    const authUnsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
-        // Fetch user details from Firestore
-        try {
-          const userDocRef = doc(db, "users", firebaseUser.uid);
-          const userDoc = await getDoc(userDocRef);
-          
-          if (userDoc.exists()) {
-            const userData = userDoc.data() as User;
-            // Determine Admin status based on email from Firestore OR Auth
-            const emailLower = (userData.email || firebaseUser.email || '').toLowerCase();
-            const shouldBeAdmin = emailLower === 'goh@gmail.com';
+        // Using onSnapshot instead of getDoc for better offline support (cache-first)
+        const userRef = doc(db, "users", firebaseUser.uid);
+        
+        // Clean up previous user listener if any
+        if (userUnsubscribe) userUnsubscribe();
 
-            // Auto-promote in Firestore if strictly needed (fixes badge for others)
-            if (shouldBeAdmin && (!userData.isAdmin || !userData.isOfficial)) {
-                 await setDoc(doc(db, "users", firebaseUser.uid), { isAdmin: true, isOfficial: true }, { merge: true });
-                 userData.isAdmin = true;
-                 userData.isOfficial = true;
-            }
+        userUnsubscribe = onSnapshot(userRef, 
+          (docSnap) => {
+            if (docSnap.exists()) {
+              const userData = docSnap.data() as User;
+              const emailLower = (userData.email || firebaseUser.email || '').toLowerCase();
+              const shouldBeAdmin = emailLower === 'goh@gmail.com';
 
-            // Merge Auth data to ensure email is always present
-            setCurrentUser({ 
-                ...userData, 
+              // Auto-promote logic (silent catch)
+              if (shouldBeAdmin && (!userData.isAdmin || !userData.isOfficial)) {
+                  setDoc(userRef, { isAdmin: true, isOfficial: true }, { merge: true }).catch(() => {});
+                  userData.isAdmin = true;
+                  userData.isOfficial = true;
+              }
+
+              setCurrentUser({
+                ...userData,
                 id: firebaseUser.uid,
                 email: userData.email || firebaseUser.email || '',
                 isOfficial: shouldBeAdmin || userData.isOfficial,
                 isAdmin: shouldBeAdmin || userData.isAdmin
-            });
-          } else {
-             // Fallback if doc doesn't exist yet (rare race condition on signup)
+              });
+              
+              setScreen(prev => (prev === AppScreen.AUTH ? AppScreen.MAIN : prev));
+            } else {
+               // Doc doesn't exist yet (very fresh register), handle gracefully
+               // We don't set screen here, AuthScreen handles creation
+            }
+            setIsLoading(false);
+          }, 
+          (err) => {
+             console.warn("User profile sync warning (likely offline):", err.message);
+             // Even if sync fails, if we have a firebaseUser, we construct a minimal user state 
+             // to allow the app to function in a degraded mode if necessary.
              const emailLower = firebaseUser.email?.toLowerCase() || '';
              const isAdmin = emailLower === 'goh@gmail.com';
              
-             const fallbackUser: User = {
-                id: firebaseUser.uid,
-                name: firebaseUser.displayName || 'User',
-                email: firebaseUser.email || '',
-                username: `@${firebaseUser.email?.split('@')[0]}`,
-                avatarColor: 'bg-tg-accent',
-                status: 'online',
-                phone: '',
-                isOfficial: isAdmin,
-                isAdmin: isAdmin
-             };
-             setCurrentUser(fallbackUser);
+             setCurrentUser({
+                 id: firebaseUser.uid,
+                 name: firebaseUser.displayName || 'User',
+                 email: firebaseUser.email || '',
+                 username: `@${firebaseUser.email?.split('@')[0] || 'user'}`,
+                 avatarColor: 'bg-tg-accent',
+                 status: 'online',
+                 phone: '',
+                 isOfficial: isAdmin,
+                 isAdmin: isAdmin
+             });
+             setScreen(prev => (prev === AppScreen.AUTH ? AppScreen.MAIN : prev));
+             setIsLoading(false);
           }
-          setScreen(AppScreen.MAIN);
-        } catch (e) {
-          console.error("Error fetching user profile:", e);
-          // Fallback logic for offline or error states
-          const emailLower = firebaseUser.email?.toLowerCase() || '';
-          const isAdmin = emailLower === 'goh@gmail.com';
-          
-          const fallbackUser: User = {
-             id: firebaseUser.uid,
-             name: firebaseUser.displayName || 'User',
-             email: firebaseUser.email || '',
-             username: `@${firebaseUser.email?.split('@')[0] || 'user'}`,
-             avatarColor: 'bg-tg-accent',
-             status: 'online',
-             phone: '',
-             isOfficial: isAdmin,
-             isAdmin: isAdmin
-          };
-          setCurrentUser(fallbackUser);
-          setScreen(AppScreen.MAIN);
-        }
+        );
       } else {
+        if (userUnsubscribe) userUnsubscribe();
         setCurrentUser(null);
         setScreen(AppScreen.AUTH);
+        setIsLoading(false);
       }
-      setIsLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      authUnsubscribe();
+      if (userUnsubscribe) userUnsubscribe();
+    };
   }, []);
 
   // --- Persistent Ban List ---
   const [systemBannedUserIds, setSystemBannedUserIds] = useState<Set<string>>(() => {
-    const saved = localStorage.getItem('hg_banned_users');
-    return saved ? new Set(JSON.parse(saved)) : new Set();
+    try {
+        const saved = localStorage.getItem('hg_banned_users');
+        return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch(e) {
+        return new Set();
+    }
   });
 
   useEffect(() => {
-    localStorage.setItem('hg_banned_users', JSON.stringify(Array.from(systemBannedUserIds)));
+    try {
+        localStorage.setItem('hg_banned_users', JSON.stringify(Array.from(systemBannedUserIds)));
+    } catch(e) {
+        console.error("Failed to save banned users", e);
+    }
   }, [systemBannedUserIds]);
 
   // Other State
@@ -231,10 +254,11 @@ const AppContent: React.FC = () => {
   const handleLogout = () => {
     // Set offline before signing out
     if (currentUser?.id) {
+        // Best effort
         updateDoc(doc(db, "users", currentUser.id), { 
             status: 'offline',
             lastSeen: Date.now()
-        });
+        }).catch(() => {});
     }
     auth.signOut();
     setIsSidebarOpen(false);
@@ -258,6 +282,44 @@ const AppContent: React.FC = () => {
   const handleOpenAdmin = () => {
       setIsSidebarOpen(false);
       setScreen(AppScreen.ADMIN);
+  };
+
+  const handleOpenSavedMessages = async () => {
+      if (!currentUser) return;
+      setIsSidebarOpen(false);
+      
+      const chatId = `saved_${currentUser.id}`;
+      // Ensure chat doc exists
+      try {
+          const chatRef = doc(db, "chats", chatId);
+          const chatSnap = await getDoc(chatRef);
+          if (!chatSnap.exists()) {
+              await setDoc(chatRef, {
+                  participants: [currentUser.id],
+                  type: 'private',
+                  updatedAt: Date.now(),
+                  lastMessage: {
+                      text: '',
+                      timestamp: new Date().toLocaleTimeString(),
+                      senderId: 'system',
+                      type: 'text'
+                  }
+              });
+          }
+      } catch (e) {
+          console.error("Error init saved messages", e);
+      }
+
+      const savedChat: Chat = {
+          id: chatId,
+          user: { ...currentUser, id: currentUser.id }, // Self chat
+          lastMessage: { id: '', text: '', timestamp: '', isRead: true, type: 'text', senderId: '' },
+          unreadCount: 0,
+          type: 'private'
+      };
+
+      setActiveChat(savedChat);
+      setScreen(AppScreen.CHAT);
   };
 
   const handleOpenUserInfo = (user: User) => {
@@ -302,9 +364,13 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     if (screen === AppScreen.ADMIN && (currentUser?.isAdmin || currentUser?.email === 'goh@gmail.com')) {
         const fetchAll = async () => {
-            const snap = await getDocs(collection(db, 'users'));
-            const users = snap.docs.map(d => d.data() as User);
-            setAllUsers(users);
+            try {
+                const snap = await getDocs(collection(db, 'users'));
+                const users = snap.docs.map(d => d.data() as User);
+                setAllUsers(users);
+            } catch (e) {
+                console.error("Failed to fetch all users", e);
+            }
         }
         fetchAll();
     }
@@ -312,6 +378,17 @@ const AppContent: React.FC = () => {
 
   if (isLoading) {
       return <div className="h-[100dvh] w-full bg-tg-bg flex items-center justify-center text-white">Loading HouseGram...</div>;
+  }
+
+  // --- Maintenance Mode Check ---
+  // If active AND user is logged in AND user is NOT admin, show Maintenance Screen.
+  // We allow AuthScreen (when currentUser is null) so admins can actually log in.
+  if (maintenanceMode && currentUser && !currentUser.isAdmin && currentUser.email !== 'goh@gmail.com') {
+      return (
+        <LanguageProvider>
+           <MaintenanceScreen />
+        </LanguageProvider>
+      );
   }
 
   return (
@@ -336,6 +413,7 @@ const AppContent: React.FC = () => {
             onClose={() => setIsSidebarOpen(false)} 
             onOpenProfile={handleOpenProfile}
             onOpenAdmin={handleOpenAdmin}
+            onOpenSavedMessages={handleOpenSavedMessages}
             currentUser={currentUser}
           />
         </div>
