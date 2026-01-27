@@ -106,6 +106,6 @@ export const MOCK_MESSAGES: Message[] = [
     timestamp: '14:30',
     isRead: true,
     type: 'text',
-    text: '🚀 **Update v0.0.1.2 Live Now!**\n\nWe heard your feedback about "skidding" media uploads.\n\n📸 **Fixed Skidding**: We implemented a new client-side compression engine. Photos now upload instantly without lagging the interface.\n\n💎 **Zippers Balance**: You can now view your exact Zippers balance directly in Settings.\n\n⚡ **Performance**: General stability improvements.\n\nUpdate is live automatically. Enjoy!'
+    text: '🚀 **Update v0.0.1.2 Live Now!**\n\nWe heard your feedback! This update brings smoother performance and powerful new tools.\n\n📸 **Zero-Lag Uploads**: We fixed the "skidding" issue. We implemented a new client-side compression engine, so photos now upload instantly without freezing the app.\n\n💎 **Zippers Balance**: You can now view your exact Zippers balance directly in Settings.\n\n⚡ **Stability**: General performance improvements and bug fixes.\n\nUpdate is live automatically. Enjoy!'
   }
 ];
