@@ -19,13 +19,11 @@ const NotificationScreen: React.FC<NotificationScreenProps> = ({ onBack }) => {
       const currentPerm = Notification.permission;
       setPermission(currentPerm);
       
-      // Check local storage for user preference
       const storedPref = localStorage.getItem('hg_notifications_enabled');
       if (currentPerm === 'granted' && storedPref === 'true') {
         setIsPushEnabled(true);
       } else {
         setIsPushEnabled(false);
-        // Ensure storage matches reality if permission was revoked externally
         if (currentPerm !== 'granted' && storedPref === 'true') {
             localStorage.setItem('hg_notifications_enabled', 'false');
         }
@@ -40,11 +38,9 @@ const NotificationScreen: React.FC<NotificationScreenProps> = ({ onBack }) => {
     }
 
     if (isPushEnabled) {
-      // User wants to disable
       setIsPushEnabled(false);
       localStorage.setItem('hg_notifications_enabled', 'false');
     } else {
-      // User wants to enable
       if (permission === 'granted') {
          setIsPushEnabled(true);
          localStorage.setItem('hg_notifications_enabled', 'true');
@@ -64,8 +60,6 @@ const NotificationScreen: React.FC<NotificationScreenProps> = ({ onBack }) => {
             });
          }
       } else {
-         // Permission denied
-         // We can't programmatically request again, user must go to settings
          alert(t('permissionDenied'));
       }
     }
@@ -84,27 +78,27 @@ const NotificationScreen: React.FC<NotificationScreenProps> = ({ onBack }) => {
 
   return (
     <div className="flex flex-col h-full w-full bg-tg-bg overflow-hidden animate-fadeIn relative">
-      <div className="z-20 bg-tg-sidebar px-4 py-3 flex items-center shadow-md border-b border-tg-border">
-        <button onClick={onBack} className="p-2 -ml-2 text-white hover:bg-white/5 rounded-full transition-colors active:scale-90">
+      <div className="z-20 bg-tg-sidebar px-4 py-3 flex items-center shadow-md border-b border-black/5 dark:border-white/5">
+        <button onClick={onBack} className="p-2 -ml-2 text-tg-text hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors active:scale-90">
           <ArrowLeft size={24} />
         </button>
-        <span className="text-white font-bold text-xl ml-4">{t('notifications')}</span>
+        <span className="text-tg-text font-bold text-xl ml-4">{t('notifications')}</span>
       </div>
 
       <div className="flex-1 overflow-y-auto no-scrollbar">
         
         {/* Enable Section */}
-        <div className="bg-tg-sidebar border-b border-tg-border">
+        <div className="bg-tg-sidebar border-b border-black/5 dark:border-white/5">
             <div 
               onClick={handleToggleNotifications}
-              className="px-5 py-4 flex items-center space-x-5 hover:bg-white/5 cursor-pointer transition-colors group"
+              className="px-5 py-4 flex items-center space-x-5 hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer transition-colors group"
             >
                 <div className={`transition-colors duration-300 ${isPushEnabled ? 'text-tg-online' : 'text-tg-secondary'}`}>
                     {isPushEnabled ? <Bell size={24} /> : <BellOff size={24} />}
                 </div>
                 <div className="flex-1 flex justify-between items-center">
                     <div className="flex flex-col">
-                        <span className="text-white text-[16px] font-medium">{t('enableNotifications')}</span>
+                        <span className="text-tg-text text-[16px] font-medium">{t('enableNotifications')}</span>
                         <span className="text-tg-secondary text-[13px]">{isPushEnabled ? t('enabled') : t('disabled')}</span>
                     </div>
                     
@@ -119,36 +113,36 @@ const NotificationScreen: React.FC<NotificationScreenProps> = ({ onBack }) => {
                     <p className="text-red-400 text-sm">{t('permissionDenied')}</p>
                 </div>
             )}
-            <p className="px-5 py-3 text-xs text-tg-secondary leading-relaxed border-t border-tg-border/30">
+            <p className="px-5 py-3 text-xs text-tg-secondary leading-relaxed border-t border-black/5 dark:border-white/5">
                 {t('notificationsDesc')}
             </p>
         </div>
 
         {/* In-App Sounds */}
         <div className="mt-6 px-5 py-2 text-xs font-bold text-tg-accent uppercase tracking-widest">{t('inAppSounds')}</div>
-        <div className="bg-tg-sidebar border-y border-tg-border">
+        <div className="bg-tg-sidebar border-y border-black/5 dark:border-white/5">
              <div 
                onClick={() => setSoundEnabled(!soundEnabled)}
-               className="px-5 py-3.5 flex items-center space-x-5 hover:bg-white/5 cursor-pointer transition-colors"
+               className="px-5 py-3.5 flex items-center space-x-5 hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer transition-colors"
              >
                  <div className="text-tg-secondary"><Volume2 size={22} /></div>
                  <div className="flex-1 flex justify-between items-center">
-                    <span className="text-white text-[16px]">{t('sound')}</span>
+                    <span className="text-tg-text text-[16px]">{t('sound')}</span>
                     <div className={`w-11 h-6 rounded-full p-1 transition-colors duration-300 relative ${soundEnabled ? 'bg-tg-accent' : 'bg-[#3A3A3C]'}`}>
                         <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-300 ${soundEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
                     </div>
                  </div>
              </div>
 
-             <div className="ml-[60px] border-b border-tg-border/30" />
+             <div className="ml-[60px] border-b border-black/5 dark:border-white/5" />
 
              <div 
                onClick={() => setVibrationEnabled(!vibrationEnabled)}
-               className="px-5 py-3.5 flex items-center space-x-5 hover:bg-white/5 cursor-pointer transition-colors"
+               className="px-5 py-3.5 flex items-center space-x-5 hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer transition-colors"
              >
                  <div className="text-tg-secondary"><Vibrate size={22} /></div>
                  <div className="flex-1 flex justify-between items-center">
-                    <span className="text-white text-[16px]">{t('vibrate')}</span>
+                    <span className="text-tg-text text-[16px]">{t('vibrate')}</span>
                      <div className={`w-11 h-6 rounded-full p-1 transition-colors duration-300 relative ${vibrationEnabled ? 'bg-tg-accent' : 'bg-[#3A3A3C]'}`}>
                         <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-300 ${vibrationEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
                     </div>
@@ -157,14 +151,14 @@ const NotificationScreen: React.FC<NotificationScreenProps> = ({ onBack }) => {
         </div>
 
         {/* Test Notification */}
-        <div className="mt-8 bg-tg-sidebar border-y border-tg-border">
+        <div className="mt-8 bg-tg-sidebar border-y border-black/5 dark:border-white/5">
              <div 
                onClick={sendTestNotification}
-               className="px-5 py-4 flex items-center space-x-5 hover:bg-white/5 cursor-pointer transition-colors group"
+               className="px-5 py-4 flex items-center space-x-5 hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer transition-colors group"
              >
                  <div className="text-tg-accent group-hover:scale-110 transition-transform"><Check size={22} strokeWidth={3} /></div>
                  <div className="flex-1">
-                    <p className="text-white text-[16px] font-medium">{t('testNotification')}</p>
+                    <p className="text-tg-text text-[16px] font-medium">{t('testNotification')}</p>
                     <p className="text-tg-secondary text-[13px]">{t('testNotificationDesc')}</p>
                  </div>
              </div>

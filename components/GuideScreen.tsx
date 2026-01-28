@@ -25,11 +25,11 @@ const GuideScreen: React.FC<GuideScreenProps> = ({ onBack }) => {
 
   return (
     <div className="flex flex-col h-full w-full bg-tg-bg overflow-hidden animate-fadeIn relative">
-      <div className="z-20 bg-tg-sidebar px-4 py-3 flex items-center shadow-md border-b border-tg-border">
-        <button onClick={onBack} className="p-2 -ml-2 text-white hover:bg-white/5 rounded-full transition-colors active:scale-90">
+      <div className="z-20 bg-tg-sidebar px-4 py-3 flex items-center shadow-md border-b border-black/5 dark:border-white/5">
+        <button onClick={onBack} className="p-2 -ml-2 text-tg-text hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors active:scale-90">
           <ArrowLeft size={24} />
         </button>
-        <span className="text-white font-bold text-xl ml-4">{t('howToUse')}</span>
+        <span className="text-tg-text font-bold text-xl ml-4">{t('howToUse')}</span>
       </div>
 
       <div className="flex-1 overflow-y-auto no-scrollbar pb-10">
@@ -42,18 +42,18 @@ const GuideScreen: React.FC<GuideScreenProps> = ({ onBack }) => {
             </p>
         </div>
 
-        <div className="bg-tg-sidebar border-y border-tg-border">
+        <div className="bg-tg-sidebar border-y border-black/5 dark:border-white/5">
            {GUIDES.map((item, index) => (
-             <div key={index} className="border-b border-tg-border/50 last:border-none">
+             <div key={index} className="border-b border-black/5 dark:border-white/5 last:border-none">
                 <button 
                   onClick={() => toggleItem(index)}
-                  className="w-full px-5 py-4 flex items-center justify-between hover:bg-white/5 transition-colors text-left group"
+                  className="w-full px-5 py-4 flex items-center justify-between hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-left group"
                 >
                    <div className="flex items-center space-x-4">
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${item.bg} ${item.color}`}>
                          {item.icon}
                       </div>
-                      <span className="text-white font-medium text-[16px] group-hover:text-tg-accent transition-colors">{item.q}</span>
+                      <span className="text-tg-text font-medium text-[16px] group-hover:text-tg-accent transition-colors">{item.q}</span>
                    </div>
                    <div className={`text-tg-secondary transition-transform duration-300 ${openIndex === index ? 'rotate-180 text-tg-accent' : ''}`}>
                       <ChevronDown size={20} />

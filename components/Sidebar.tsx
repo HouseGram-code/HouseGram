@@ -1,8 +1,8 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Users, Megaphone, User, Phone, Bookmark, 
-  Settings, UserPlus, ShieldAlert, Lock
+  Settings, UserPlus, ShieldAlert, Lock, Moon, Sun
 } from 'lucide-react';
 import { User as UserType } from '../types.ts';
 import { useLanguage } from '../LanguageContext.tsx';
@@ -18,9 +18,39 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onOpenProfile, onOpenAdmin, onOpenSavedMessages, currentUser }) => {
   const { t } = useLanguage();
+  const [isDarkMode, setIsDarkMode] = useState(true);
   
-  // Secret Check: Only show if email matches goh@gmail.com
   const isAdmin = currentUser.email?.toLowerCase() === 'goh@gmail.com';
+
+  const updateMetaThemeColor = (theme: string) => {
+      const meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) {
+          meta.setAttribute('content', theme === 'dark' ? '#0E1621' : '#FFFFFF');
+      }
+  };
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('hg_theme');
+    if (savedTheme) {
+      setIsDarkMode(savedTheme === 'dark');
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      updateMetaThemeColor(savedTheme);
+    } else {
+      setIsDarkMode(true); 
+      document.documentElement.setAttribute('data-theme', 'dark');
+      updateMetaThemeColor('dark');
+    }
+  }, []);
+
+  const toggleTheme = (e: React.MouseEvent) => {
+    e.stopPropagation(); 
+    const newMode = !isDarkMode;
+    setIsDarkMode(newMode);
+    const theme = newMode ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('hg_theme', theme);
+    updateMetaThemeColor(theme);
+  };
 
   return (
     <>
@@ -28,17 +58,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onOpenProfile, onOpe
         className={`fixed inset-0 bg-black/60 z-40 backdrop-blur-[2px] transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} 
         onClick={onClose} 
       />
-      {/* 
-         iPhone Complaint Fixes: 
-         1. w-[280px] to allow tapping backdrop on iPhone SE (320px width).
-         2. pt-safe in header to prevent status bar overlap.
-      */}
-      <div className={`fixed inset-y-0 left-0 w-[280px] bg-tg-sidebar z-50 transform transition-transform duration-300 ease-out ${isOpen ? 'translate-x-0' : '-translate-x-full'} shadow-2xl flex flex-col h-full border-r border-black/20`}>
+      <div className={`fixed inset-y-0 left-0 w-[280px] bg-tg-sidebar z-50 transform transition-transform duration-300 ease-out ${isOpen ? 'translate-x-0' : '-translate-x-full'} shadow-2xl flex flex-col h-full border-r border-black/5 dark:border-white/5`}>
         
         {/* Profile Header */}
         <div 
           onClick={onOpenProfile} 
-          className="relative min-h-[160px] bg-[#1c242f] px-6 pt-safe pb-6 flex flex-col justify-end cursor-pointer group hover:bg-[#232c3a] transition-colors shrink-0"
+          className="relative min-h-[160px] bg-[#1c242f] px-6 pt-safe pb-6 flex flex-col justify-end cursor-pointer group hover:bg-[#232c3a] transition-colors shrink-0 overflow-hidden"
         >
           <div className="absolute top-0 right-0 w-40 h-40 bg-tg-accent/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none" />
           
@@ -47,17 +72,25 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onOpenProfile, onOpe
               <div className="relative inline-block">
                 {currentUser.avatarUrl ? (
                   currentUser.isVideoAvatar ? (
-                     <video src={currentUser.avatarUrl} autoPlay loop muted playsInline className="w-[60px] h-[60px] rounded-full object-cover border-2 border-white/5 shadow-md" />
+                     <video src={currentUser.avatarUrl} autoPlay loop muted playsInline className="w-[60px] h-[60px] rounded-full object-cover border-2 border-white/10 shadow-md" />
                   ) : (
-                     <img src={currentUser.avatarUrl} alt={currentUser.name} className="w-[60px] h-[60px] rounded-full object-cover border-2 border-white/5 shadow-md" />
+                     <img src={currentUser.avatarUrl} alt={currentUser.name} className="w-[60px] h-[60px] rounded-full object-cover border-2 border-white/10 shadow-md" />
                   )
                 ) : (
-                  <div className={`w-[60px] h-[60px] rounded-full ${currentUser.avatarColor} border-2 border-white/5 flex items-center justify-center text-2xl font-bold text-white shadow-md`}>
+                  <div className={`w-[60px] h-[60px] rounded-full ${currentUser.avatarColor} border-2 border-white/10 flex items-center justify-center text-2xl font-bold text-white shadow-md`}>
                     {currentUser.name.charAt(0)}
                   </div>
                 )}
                 <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-tg-online border-[2.5px] border-[#1c242f] rounded-full" />
               </div>
+
+              <button 
+                onClick={toggleTheme}
+                className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white active:scale-95"
+                title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+              >
+                {isDarkMode ? <Sun size={20} /> : <Moon size={20} fill="currentColor" />}
+              </button>
             </div>
 
             <div className="flex flex-col">
@@ -71,19 +104,20 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onOpenProfile, onOpe
           </div>
         </div>
 
-        {/* Menu Items - Order matches user request */}
         <div className="flex-1 overflow-y-auto no-scrollbar py-2 pb-safe bg-tg-sidebar">
           
           <MenuItem 
             icon={<Users size={24} />} 
-            label={t('createGroup')} // Little men icon
+            label={t('createGroup')} 
+            badge={<Badge text={t('soon')} />}
           />
           <MenuItem 
             icon={<Megaphone size={24} />} 
             label={t('createChannel')} 
+            badge={<Badge text={t('soon')} />}
           />
           
-          <div className="my-2 border-b border-white/5 mx-4" />
+          <div className="my-2 border-b border-black/5 dark:border-white/5 mx-4" />
           
           <MenuItem 
             icon={<User size={24} />} 
@@ -97,7 +131,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onOpenProfile, onOpe
           />
           <MenuItem 
             icon={<Bookmark size={24} className="fill-current text-tg-accent" />} 
-            label={t('saved')} // "Favorites" in EN
+            label={t('saved')} 
             onClick={onOpenSavedMessages}
             activeColor="text-tg-accent"
           />
@@ -107,7 +141,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onOpenProfile, onOpe
             onClick={onOpenProfile} 
           />
 
-          <div className="my-2 border-b border-white/5 mx-4" />
+          <div className="my-2 border-b border-black/5 dark:border-white/5 mx-4" />
 
           <MenuItem 
             icon={<UserPlus size={24} />} 
@@ -115,7 +149,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onOpenProfile, onOpe
             badge={<Badge text={t('soon')} />}
           />
           
-          {/* Secret Admin Button */}
           {isAdmin && onOpenAdmin && (
              <MenuItem 
                 icon={<ShieldAlert size={24} className="text-red-500" />} 
@@ -147,13 +180,13 @@ interface MenuItemProps {
 const MenuItem: React.FC<MenuItemProps> = ({ icon, label, badge, onClick, activeColor }) => (
   <div 
     onClick={onClick} 
-    className="flex items-center px-6 py-3.5 space-x-6 hover:bg-white/5 cursor-pointer transition-all group active:bg-white/10"
+    className="flex items-center px-6 py-3.5 space-x-6 hover:bg-gradient-to-r hover:from-white/5 hover:to-transparent cursor-pointer transition-all group active:scale-[0.98]"
   >
-    <div className={`${activeColor ? activeColor : 'text-tg-secondary group-hover:text-white'} transition-colors duration-200`}>
+    <div className={`${activeColor ? activeColor : 'text-tg-secondary group-hover:text-white'} transition-colors duration-300 group-hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]`}>
       {icon}
     </div>
     <div className="flex-1 flex justify-between items-center min-w-0">
-      <span className="text-white font-medium text-[15px] group-hover:translate-x-1 transition-transform duration-200">
+      <span className="text-tg-text font-medium text-[15px] group-hover:translate-x-1 transition-transform duration-200">
         {label}
       </span>
       {badge}

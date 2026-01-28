@@ -29,6 +29,8 @@ export interface User {
   isBanned?: boolean;
   isOfficial?: boolean;
   isAdmin?: boolean;
+  isTester?: boolean; // New field for tester badge
+  isPremium?: boolean; // New field for Premium status
   gifts?: Gift[]; // New field for received gifts
   zippers?: number; // Renamed from stars
 }
@@ -88,9 +90,13 @@ export enum AppScreen {
 export type Language = 'ru' | 'en' | 'es' | 'de' | 'fr' | 'tr' | 'it';
 
 export const isUserOnline = (user: User, viewer?: User): boolean => {
-  if (user.id === 'news-bot' || user.id === 'housegram_news') return true;
+  // If the target user hides their status, nobody can see it (unless we add an override for that too, but standard is target privacy rules)
   if (user.lastSeenPrivacy === 'nobody') return false;
-  if (viewer && viewer.lastSeenPrivacy === 'nobody') return false;
+  
+  // If the viewer hides their own status, they usually can't see others.
+  // Exception: Viewer is Premium.
+  if (viewer && viewer.lastSeenPrivacy === 'nobody' && !viewer.isPremium) return false;
+
   if (typeof user.lastSeen === 'number') {
     const now = Date.now();
     const diff = now - user.lastSeen;
@@ -101,9 +107,18 @@ export const isUserOnline = (user: User, viewer?: User): boolean => {
 
 export const formatLastSeen = (user: User, t: (k: string) => string, viewer?: User): string => {
   if (isUserOnline(user, viewer)) return t('online');
-  if (user.lastSeenPrivacy === 'nobody' || (viewer && viewer.lastSeenPrivacy === 'nobody')) {
+  
+  // Logic for hiding last seen
+  if (user.lastSeenPrivacy === 'nobody') {
       return t('lastSeenRecently');
   }
+
+  // Reciprocal rule: If viewer hides theirs, they see 'recently' for others
+  // Exception: Viewer is Premium
+  if (viewer && viewer.lastSeenPrivacy === 'nobody' && !viewer.isPremium) {
+      return t('lastSeenRecently');
+  }
+
   if (typeof user.lastSeen === 'number') {
     const date = new Date(user.lastSeen);
     const today = new Date();

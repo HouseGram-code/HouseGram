@@ -36,11 +36,11 @@ const FAQScreen: React.FC<FAQScreenProps> = ({ onBack }) => {
 
     return (
       <div className="flex flex-col h-full w-full bg-tg-bg overflow-hidden animate-fadeIn relative">
-        <div className="bg-tg-sidebar px-4 py-3 flex items-center border-b border-tg-border shadow-md z-10">
-          <button onClick={() => setView('main')} className="p-2 -ml-2 text-white hover:bg-white/5 rounded-full transition-colors">
+        <div className="bg-tg-sidebar px-4 py-3 flex items-center border-b border-black/5 dark:border-white/5 shadow-md z-10">
+          <button onClick={() => setView('main')} className="p-2 -ml-2 text-tg-text hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors">
             <ArrowLeft size={24} />
           </button>
-          <span className="text-white font-bold text-xl ml-4">{t('privacyPolicy')}</span>
+          <span className="text-tg-text font-bold text-xl ml-4">{t('privacyPolicy')}</span>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 pb-12">
@@ -49,16 +49,16 @@ const FAQScreen: React.FC<FAQScreenProps> = ({ onBack }) => {
                  <ScrollText size={32} />
               </div>
               <div>
-                 <h2 className="text-2xl font-bold text-white leading-tight">HouseGram</h2>
+                 <h2 className="text-2xl font-bold text-tg-text leading-tight">HouseGram</h2>
                  <p className="text-tg-secondary text-sm">{t('privacyPolicyDesc')}</p>
               </div>
            </div>
 
            <div className="space-y-8">
               {rules.map((rule, index) => (
-                <div key={index} className="relative pl-6 border-l-2 border-tg-border/50 hover:border-tg-accent transition-colors duration-300">
+                <div key={index} className="relative pl-6 border-l-2 border-black/5 dark:border-white/5 hover:border-tg-accent transition-colors duration-300">
                    <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-tg-bg border-2 border-tg-accent/50" />
-                   <h3 className="text-lg font-bold text-white mb-2 flex items-center">
+                   <h3 className="text-lg font-bold text-tg-text mb-2 flex items-center">
                       <span className="text-tg-accent mr-2">{index + 1}.</span> {rule.title}
                    </h3>
                    <p className="text-tg-secondary text-[15px] leading-relaxed whitespace-pre-line">
@@ -68,7 +68,7 @@ const FAQScreen: React.FC<FAQScreenProps> = ({ onBack }) => {
               ))}
            </div>
            
-           <div className="mt-12 pt-8 border-t border-tg-border/30 text-center">
+           <div className="mt-12 pt-8 border-t border-black/5 dark:border-white/5 text-center">
               <p className="text-xs text-tg-secondary uppercase tracking-widest opacity-60">
                  Effective Date: January 2026
               </p>
@@ -81,11 +81,11 @@ const FAQScreen: React.FC<FAQScreenProps> = ({ onBack }) => {
   return (
     <div className="flex flex-col h-full w-full bg-tg-bg overflow-hidden animate-fadeIn relative">
       {/* Header */}
-      <div className="z-20 bg-tg-sidebar px-4 py-3 flex items-center shadow-md border-b border-tg-border">
-        <button onClick={onBack} className="p-2 -ml-2 text-white hover:bg-white/5 rounded-full transition-colors active:scale-90">
+      <div className="z-20 bg-tg-sidebar px-4 py-3 flex items-center shadow-md border-b border-black/5 dark:border-white/5">
+        <button onClick={onBack} className="p-2 -ml-2 text-tg-text hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors active:scale-90">
           <ArrowLeft size={24} />
         </button>
-        <span className="text-white font-bold text-xl ml-4">{t('help')}</span>
+        <span className="text-tg-text font-bold text-xl ml-4">{t('help')}</span>
       </div>
 
       <div className="flex-1 overflow-y-auto no-scrollbar pb-10">
@@ -99,13 +99,13 @@ const FAQScreen: React.FC<FAQScreenProps> = ({ onBack }) => {
             </div>
             
             <div>
-                <h3 className="text-white font-bold text-lg">{t('supportTitle')}</h3>
+                <h3 className="text-tg-text font-bold text-lg">{t('supportTitle')}</h3>
                 <p className="text-tg-secondary text-sm mt-1 max-w-xs mx-auto leading-relaxed">
                    {t('supportDesc')}
                 </p>
             </div>
 
-            <button disabled className="flex items-center space-x-2 px-5 py-2.5 bg-white/5 border border-white/10 rounded-full text-white/50 cursor-not-allowed">
+            <button disabled className="flex items-center space-x-2 px-5 py-2.5 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-full text-tg-text/50 cursor-not-allowed">
                <MessageCircle size={16} />
                <span className="text-sm font-medium">{t('soon')}</span>
             </button>
@@ -114,18 +114,18 @@ const FAQScreen: React.FC<FAQScreenProps> = ({ onBack }) => {
         {/* FAQ List */}
         <div className="px-5 pb-2 text-xs font-bold text-tg-accent uppercase tracking-widest mt-2 ml-1">{t('faq')}</div>
         
-        <div className="bg-tg-sidebar border-y border-tg-border">
+        <div className="bg-tg-sidebar border-y border-black/5 dark:border-white/5">
            {FAQS.map((item, index) => (
-             <div key={index} className="border-b border-tg-border/50 last:border-none">
+             <div key={index} className="border-b border-black/5 dark:border-white/5 last:border-none">
                 <button 
                   onClick={() => toggleFAQ(index)}
-                  className="w-full px-6 py-4 flex items-center justify-between hover:bg-white/5 transition-colors text-left"
+                  className="w-full px-6 py-4 flex items-center justify-between hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-left"
                 >
                    <div className="flex items-start space-x-4">
                       <div className={`mt-0.5 p-1 rounded-full ${openIndex === index ? 'bg-tg-accent/20 text-tg-accent' : 'text-tg-secondary'}`}>
                          <HelpCircle size={18} />
                       </div>
-                      <span className="text-white font-medium text-[15px] pr-4">{item.q}</span>
+                      <span className="text-tg-text font-medium text-[15px] pr-4">{item.q}</span>
                    </div>
                    <div className={`text-tg-secondary transition-transform duration-300 ${openIndex === index ? 'rotate-180' : ''}`}>
                       <ChevronDown size={18} />
@@ -144,16 +144,16 @@ const FAQScreen: React.FC<FAQScreenProps> = ({ onBack }) => {
         </div>
 
         {/* Privacy Policy Link */}
-        <div className="mt-6 bg-tg-sidebar border-y border-tg-border">
+        <div className="mt-6 bg-tg-sidebar border-y border-black/5 dark:border-white/5">
             <div 
                onClick={() => setView('policy')}
-               className="px-5 py-4 flex items-center space-x-5 hover:bg-white/5 cursor-pointer transition-colors group"
+               className="px-5 py-4 flex items-center space-x-5 hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer transition-colors group"
              >
                 <div className="text-tg-secondary group-hover:text-tg-accent transition-colors">
                     <FileText size={22} />
                 </div>
                 <div className="flex-1 flex justify-between items-center">
-                    <span className="text-white text-[16px]">{t('privacyPolicy')}</span>
+                    <span className="text-tg-text text-[16px]">{t('privacyPolicy')}</span>
                     <ChevronRight size={16} className="text-tg-secondary/50" />
                 </div>
             </div>

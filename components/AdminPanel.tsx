@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   ArrowLeft, ShieldAlert, Users, Activity, Terminal, 
   Search, Lock, Unlock, RefreshCw, BarChart2, HardDrive,
-  Snowflake, Construction, Gift, Zap, CheckCircle
+  Snowflake, Construction, Gift, Zap, CheckCircle, FlaskConical
 } from 'lucide-react';
 import { User, Gift as GiftType } from '../types.ts';
 import { db } from '../firebase.ts';
@@ -28,6 +28,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   // Quick Grant State
   const [targetUsername, setTargetUsername] = useState('');
   const [grantAmount, setGrantAmount] = useState<string>('100');
+
+  // Tester Grant State
+  const [testerTargetUsername, setTesterTargetUsername] = useState('');
 
   // Listen to global settings
   useEffect(() => {
@@ -110,6 +113,31 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
       await handleGrantZippersToUser(targetUser);
       alert(`Successfully sent zippers to @${cleanUsername}`);
       setTargetUsername(''); // Clear after success
+  };
+
+  const handleToggleTesterByUsername = async () => {
+    if (!testerTargetUsername.trim()) {
+        alert("Please enter a username.");
+        return;
+    }
+    
+    const cleanUsername = testerTargetUsername.trim().replace('@', '').toLowerCase();
+    const targetUser = users.find(u => (u.username || '').replace('@', '').toLowerCase() === cleanUsername);
+    
+    if (!targetUser) {
+        alert("User not found in loaded database!");
+        return;
+    }
+
+    try {
+        await updateDoc(doc(db, "users", targetUser.id), {
+            isTester: !targetUser.isTester
+        });
+        alert(`Successfully ${!targetUser.isTester ? 'granted' : 'revoked'} Tester status for @${cleanUsername}`);
+        setTesterTargetUsername('');
+    } catch (e) {
+        console.error("Error toggling tester status", e);
+    }
   };
 
   const filteredUsers = users.filter(u => 
@@ -213,10 +241,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
 
             {activeTab === 'users' && (
                 <div className="animate-fadeIn space-y-6">
-                    {/* Quick Issue Tool */}
+                    {/* Quick Issue Tool - Zippers */}
                     <div className="bg-white/5 border border-white/10 p-5 rounded-lg flex flex-col md:flex-row items-end md:items-center gap-4">
                         <div className="flex-1 w-full">
-                            <label className="text-xs text-gray-500 uppercase font-bold mb-1 block">Target Username</label>
+                            <label className="text-xs text-gray-500 uppercase font-bold mb-1 block">Issue Zippers - Username</label>
                             <div className="flex items-center bg-black/30 rounded-lg px-3 border border-white/10">
                                 <span className="text-gray-400">@</span>
                                 <input 
@@ -246,6 +274,30 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                         </button>
                     </div>
 
+                    {/* Quick Issue Tool - Tester Badge */}
+                    <div className="bg-white/5 border border-white/10 p-5 rounded-lg flex flex-col md:flex-row items-end md:items-center gap-4">
+                        <div className="flex-1 w-full">
+                            <label className="text-xs text-gray-500 uppercase font-bold mb-1 block">Toggle Tester Status - Username</label>
+                            <div className="flex items-center bg-black/30 rounded-lg px-3 border border-white/10">
+                                <span className="text-gray-400">@</span>
+                                <input 
+                                    type="text" 
+                                    value={testerTargetUsername}
+                                    onChange={(e) => setTesterTargetUsername(e.target.value)}
+                                    placeholder="username"
+                                    className="bg-transparent border-none outline-none text-white w-full py-2 font-mono"
+                                />
+                            </div>
+                        </div>
+                        <button
+                            onClick={handleToggleTesterByUsername}
+                            className="w-full md:w-auto bg-purple-600 hover:bg-purple-700 text-white font-bold px-6 py-2 rounded-lg flex items-center justify-center space-x-2 transition-colors h-[42px]"
+                        >
+                            <FlaskConical size={18} />
+                            <span>Toggle Status</span>
+                        </button>
+                    </div>
+
                     {/* Search & List */}
                     <div className="space-y-4">
                         <div className="flex items-center space-x-4 bg-white/5 p-3 rounded-lg border border-white/10">
@@ -270,6 +322,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                                             <p className="font-bold flex items-center">
                                                 {user.name} 
                                                 <span className="text-gray-500 text-xs ml-2 font-normal">@{user.username?.replace('@', '')}</span>
+                                                {user.isTester && <FlaskConical size={14} className="ml-2 text-purple-400" />}
                                             </p>
                                             <p className="text-xs text-gray-500 uppercase tracking-widest mt-1 flex items-center gap-2">
                                                 ID: {user.id.slice(0, 8)}... 

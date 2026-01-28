@@ -2,7 +2,7 @@
 import React, { useState, useRef } from 'react';
 import { 
   ArrowLeft, Info, AtSign, Mail, 
-  MessageCircle, Ban, Trash2, ShieldCheck, BadgeCheck, ShieldAlert, Bookmark, Star, Image, FileText, Link, Zap, User as UserIcon, Calendar, X
+  MessageCircle, Ban, Trash2, ShieldCheck, BadgeCheck, ShieldAlert, Bookmark, Star, Image, FileText, Link, Zap, User as UserIcon, Calendar, X, FlaskConical
 } from 'lucide-react';
 import { User, formatLastSeen, Gift } from '../types.ts';
 import { useLanguage } from '../LanguageContext.tsx';
@@ -82,7 +82,7 @@ const UserInfoScreen: React.FC<UserInfoScreenProps> = ({ user, isBlocked, onBack
         </div>
       )}
 
-      {/* VIEW GIFT DETAILS MODAL (Duplicate from ChatScreen basically but for Gift object) */}
+      {/* VIEW GIFT DETAILS MODAL */}
       {viewingGift && (
           <div className="fixed inset-0 z-[110] flex flex-col bg-black/90 animate-fadeIn justify-center items-center p-4">
               <div className="bg-[#1c242f] w-full max-w-sm rounded-2xl border border-white/10 relative shadow-2xl animate-form-entrance overflow-hidden">
@@ -158,7 +158,7 @@ const UserInfoScreen: React.FC<UserInfoScreenProps> = ({ user, isBlocked, onBack
       )}
 
       {/* Dynamic Header */}
-      <div className={`fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 pb-2 pt-safe transition-all duration-300 min-h-[60px] h-auto ${isScrolled ? 'bg-tg-sidebar shadow-lg border-b border-tg-border' : 'bg-transparent'}`}>
+      <div className={`fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 pb-2 pt-safe transition-all duration-300 min-h-[60px] h-auto ${isScrolled ? 'bg-tg-sidebar shadow-lg border-b border-black/5 dark:border-white/5' : 'bg-transparent'}`}>
         <div className="flex items-center space-x-3">
           <button onClick={onBack} className="p-2 -ml-2 text-white hover:bg-white/10 rounded-full transition-colors active:scale-90">
             <ArrowLeft size={24} />
@@ -207,6 +207,11 @@ const UserInfoScreen: React.FC<UserInfoScreenProps> = ({ user, isBlocked, onBack
                          <ShieldCheck size={20} className="text-amber-500" />
                     </div>
                 )}
+                {!isSavedMessages && user.isTester && (
+                    <div className="ml-2 bg-purple-500/10 border border-purple-500/20 rounded-full p-1" title="Beta Tester">
+                         <FlaskConical size={20} className="text-purple-500" />
+                    </div>
+                )}
             </h2>
             <p className={`font-medium mt-1 ${isOnline ? 'text-tg-online' : 'text-tg-secondary'}`}>
               {statusText}
@@ -219,8 +224,8 @@ const UserInfoScreen: React.FC<UserInfoScreenProps> = ({ user, isBlocked, onBack
         </div>
 
         {/* Info Items Section */}
-        <div className="mt-4 bg-tg-sidebar border-y border-tg-border space-y-0.5">
-           {!isSavedMessages && user.email && (
+        <div className="mt-4 bg-tg-sidebar border-y border-black/5 dark:border-white/5 space-y-0.5">
+           {!isSavedMessages && user.email && !user.isOfficial && (
              <InfoItem 
                icon={<Mail size={22} className="text-tg-accent" />} 
                value={getDisplayEmail(user.email)} 
@@ -245,9 +250,9 @@ const UserInfoScreen: React.FC<UserInfoScreenProps> = ({ user, isBlocked, onBack
 
         {/* TABS SECTION (Gifts, Media, etc) */}
         {!isSavedMessages && (
-            <div className="mt-4 bg-tg-sidebar border-y border-tg-border min-h-[300px]">
+            <div className="mt-4 bg-tg-sidebar border-y border-black/5 dark:border-white/5 min-h-[300px]">
                 {/* Tabs Header */}
-                <div className="flex border-b border-tg-border/50">
+                <div className="flex border-b border-black/5 dark:border-white/5">
                     <TabButton active={activeTab === 'gifts'} label="Gifts" icon={<Star size={16} />} onClick={() => setActiveTab('gifts')} />
                     <TabButton active={activeTab === 'media'} label="Media" icon={<Image size={16} />} onClick={() => setActiveTab('media')} />
                     <TabButton active={activeTab === 'files'} label="Files" icon={<FileText size={16} />} onClick={() => setActiveTab('files')} />
@@ -263,7 +268,7 @@ const UserInfoScreen: React.FC<UserInfoScreenProps> = ({ user, isBlocked, onBack
                                     <div 
                                         key={`${gift.id}-${idx}`} 
                                         onClick={() => setViewingGift(gift)}
-                                        className="bg-[#242f3d] rounded-xl p-2 flex flex-col items-center relative overflow-hidden group shadow-lg cursor-pointer hover:bg-[#2b3849] transition-all hover:scale-105 active:scale-95"
+                                        className="bg-black/5 dark:bg-[#242f3d] rounded-xl p-2 flex flex-col items-center relative overflow-hidden group shadow-lg cursor-pointer hover:bg-black/10 dark:hover:bg-[#2b3849] transition-all hover:scale-105 active:scale-95"
                                     >
                                         <div className="absolute inset-0 opacity-20" style={{ backgroundColor: gift.backgroundColor }} />
                                         <img src={gift.imageUrl} className="w-12 h-12 object-contain relative z-10 mb-1" alt={gift.name} />
@@ -275,7 +280,7 @@ const UserInfoScreen: React.FC<UserInfoScreenProps> = ({ user, isBlocked, onBack
                                 ))
                             ) : (
                                 <div className="col-span-3 py-8 flex flex-col items-center justify-center text-center opacity-50 space-y-2">
-                                    <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center">
+                                    <div className="w-16 h-16 bg-black/5 dark:bg-white/5 rounded-full flex items-center justify-center">
                                         <Star size={32} className="text-tg-secondary" />
                                     </div>
                                     <p className="text-tg-secondary text-sm">No gifts yet.</p>
@@ -295,7 +300,7 @@ const UserInfoScreen: React.FC<UserInfoScreenProps> = ({ user, isBlocked, onBack
 
         {/* Action List */}
         {!isSavedMessages && !user.isOfficial && !user.isAdmin && (
-            <div className="mt-4 bg-tg-sidebar border-y border-tg-border">
+            <div className="mt-4 bg-tg-sidebar border-y border-black/5 dark:border-white/5">
             <SettingsLink 
                 icon={<Ban size={22} className={isBlocked ? "text-tg-accent" : "text-red-500"} />} 
                 label={isBlocked ? t('unblockUser') : t('blockUser')} 
@@ -320,7 +325,7 @@ const UserInfoScreen: React.FC<UserInfoScreenProps> = ({ user, isBlocked, onBack
 const TabButton: React.FC<{ active: boolean; label: string; icon: React.ReactNode; onClick: () => void }> = ({ active, label, icon, onClick }) => (
     <button 
         onClick={onClick}
-        className={`flex-1 py-3 flex flex-col items-center justify-center space-y-1 relative transition-colors ${active ? 'text-tg-accent' : 'text-tg-secondary hover:text-white'}`}
+        className={`flex-1 py-3 flex flex-col items-center justify-center space-y-1 relative transition-colors ${active ? 'text-tg-accent' : 'text-tg-secondary hover:text-tg-text'}`}
     >
         {icon}
         <span className="text-[10px] font-bold uppercase tracking-wider">{label}</span>
@@ -338,10 +343,10 @@ const ActionButton: React.FC<{ icon: React.ReactNode; label?: string; onClick?: 
 );
 
 const InfoItem: React.FC<{ icon: React.ReactNode; value: string; label: string }> = ({ icon, value, label }) => (
-  <div className="px-5 py-4 flex items-center space-x-6 hover:bg-white/5 transition-colors cursor-pointer group">
+  <div className="px-5 py-4 flex items-center space-x-6 hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer group">
     <div className="flex-shrink-0 group-hover:scale-110 transition-transform">{icon}</div>
     <div className="flex-1 flex flex-col min-w-0">
-      <span className="text-white text-[16px] font-medium truncate">{value}</span>
+      <span className="text-tg-text text-[16px] font-medium truncate">{value}</span>
       <span className="text--[12px] text-tg-secondary font-bold uppercase tracking-wider">{label}</span>
     </div>
   </div>
@@ -350,11 +355,11 @@ const InfoItem: React.FC<{ icon: React.ReactNode; value: string; label: string }
 const SettingsLink: React.FC<{ icon: React.ReactNode; label: string; color?: string; onClick?: () => void }> = ({ icon, label, color, onClick }) => (
   <div 
     onClick={onClick}
-    className="px-5 py-4 flex items-center space-x-6 hover:bg-white/5 transition-colors cursor-pointer group"
+    className="px-5 py-4 flex items-center space-x-6 hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer group"
   >
     <div className="flex-shrink-0">{icon}</div>
-    <div className="flex-1 border-b border-tg-border/50 pb-4 group-last:border-none">
-       <span className={`${color || 'text-white'} text-[16px] font-medium`}>{label}</span>
+    <div className="flex-1 border-b border-black/5 dark:border-white/5 pb-4 group-last:border-none">
+       <span className={`${color || 'text-tg-text'} text-[16px] font-medium`}>{label}</span>
     </div>
   </div>
 );

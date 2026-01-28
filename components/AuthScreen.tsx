@@ -16,6 +16,7 @@ const AuthScreen: React.FC = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const isFormValid = isRegistering 
     ? (name.length > 0 && email.includes('@') && password.length >= 6 && username.length > 0)
@@ -34,22 +35,17 @@ const AuthScreen: React.FC = () => {
 
     try {
         if (isRegistering) {
-            // Register Logic
             const finalUsername = username.startsWith('@') ? username : `@${username}`;
-            
-            // 1. Check Username Uniqueness
             const exists = await checkUsernameExists(finalUsername);
             if (exists) {
                 throw new Error("Username already taken");
             }
 
-            // 2. Create Auth User
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
 
             await updateProfile(user, { displayName: name });
 
-            // 3. Create Firestore Doc
             const isOfficial = email.toLowerCase() === 'goh@gmail.com';
             const newUser: User = {
                 id: user.uid,
@@ -67,14 +63,16 @@ const AuthScreen: React.FC = () => {
             await setDoc(doc(db, "users", user.uid), newUser);
 
         } else {
-            // Login Logic
             await signInWithEmailAndPassword(auth, email, password);
         }
+        
+        setIsSuccess(true);
+        await new Promise(resolve => setTimeout(resolve, 800));
+
     } catch (err: any) {
         console.error("Auth Error:", err);
         let msg = err.message;
         
-        // Handle common Firebase Auth error codes
         if (err.code === 'auth/email-already-in-use') msg = "This email is already registered.";
         else if (err.code === 'auth/invalid-credential') msg = "Incorrect email or password.";
         else if (err.code === 'auth/user-not-found') msg = "User not found.";
@@ -84,8 +82,9 @@ const AuthScreen: React.FC = () => {
         else msg = "An error occurred. Please try again.";
 
         setError(msg);
+        setIsSuccess(false);
     } finally {
-        setLoading(false);
+        if (!isSuccess) setLoading(false);
     }
   };
 
@@ -93,32 +92,30 @@ const AuthScreen: React.FC = () => {
     <div className="flex flex-col items-center w-full max-w-lg mx-auto p-6 h-full overflow-y-auto no-scrollbar relative pb-safe">
       <div className="flex-1 flex flex-col items-center justify-center w-full space-y-10 min-h-[600px]">
         
-        {/* Simple Plane Logo */}
-        <div className="relative flex flex-col items-center animate-fly-in">
-            <div className="w-32 h-32 rounded-full bg-black flex items-center justify-center shadow-2xl shadow-red-500/10 border border-white/10">
-            <div className="animate-plane-float">
-                <Send className="text-red-600 w-16 h-16" fill="currentColor" />
+        <div className={`relative flex flex-col items-center transition-all duration-1000 ${isSuccess ? 'animate-fly-away' : 'animate-fly-in'}`}>
+            <div className="w-32 h-32 rounded-[32px] bg-gradient-to-br from-[#1c1c1e] to-black flex items-center justify-center shadow-2xl shadow-blue-500/10 border border-white/10">
+            <div className={`${!isSuccess ? 'animate-plane-float' : ''}`}>
+                <Send className="text-tg-accent w-16 h-16 filter drop-shadow-[0_0_15px_rgba(42,171,238,0.5)]" fill="currentColor" />
             </div>
             </div>
         </div>
 
-        {/* Form Content */}
-        <div className="w-full max-w-sm text-center space-y-6 animate-form-entrance">
+        <div className={`w-full max-w-sm text-center space-y-6 animate-form-entrance ${isSuccess ? 'opacity-0 transition-opacity duration-500' : ''}`}>
             <div className="space-y-2">
-            <h1 className="text-3xl font-bold text-white tracking-tight">{t('appName')}</h1>
-            <p className="text-[15px] text-tg-secondary">
+            <h1 className="text-3xl font-black text-white tracking-tight">{t('appName')}</h1>
+            <p className="text-[15px] text-tg-secondary font-medium">
                 {isRegistering ? t('createAccount') : t('login')}
             </p>
             </div>
 
             {error && (
-                <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 flex items-center space-x-2 text-red-400 text-sm text-left animate-fadeIn">
-                    <AlertCircle size={16} className="shrink-0" />
-                    <span>{error}</span>
+                <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex items-center space-x-3 text-red-400 text-sm text-left animate-fadeIn backdrop-blur-sm">
+                    <AlertCircle size={18} className="shrink-0" />
+                    <span className="font-medium">{error}</span>
                 </div>
             )}
 
-            <div className="w-full space-y-3">
+            <div className="w-full space-y-4">
             {isRegistering && (
                 <>
                     <div className="relative group">
@@ -130,7 +127,7 @@ const AuthScreen: React.FC = () => {
                         placeholder={t('fullName')}
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        className="block w-full pl-12 pr-4 py-3.5 bg-tg-sidebar border-2 border-tg-border rounded-xl text-white placeholder-tg-secondary focus:outline-none focus:border-tg-accent transition-all duration-300 text-[16px]"
+                        className="block w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-tg-secondary focus:outline-none focus:border-tg-accent/50 focus:ring-1 focus:ring-tg-accent/50 transition-all duration-300 text-[16px] backdrop-blur-sm"
                         />
                     </div>
                     <div className="relative group">
@@ -142,7 +139,7 @@ const AuthScreen: React.FC = () => {
                         placeholder={t('username')}
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
-                        className="block w-full pl-12 pr-4 py-3.5 bg-tg-sidebar border-2 border-tg-border rounded-xl text-white placeholder-tg-secondary focus:outline-none focus:border-tg-accent transition-all duration-300 text-[16px]"
+                        className="block w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-tg-secondary focus:outline-none focus:border-tg-accent/50 focus:ring-1 focus:ring-tg-accent/50 transition-all duration-300 text-[16px] backdrop-blur-sm"
                         />
                     </div>
                 </>
@@ -157,7 +154,7 @@ const AuthScreen: React.FC = () => {
                 placeholder={t('email')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="block w-full pl-12 pr-4 py-3.5 bg-tg-sidebar border-2 border-tg-border rounded-xl text-white placeholder-tg-secondary focus:outline-none focus:border-tg-accent transition-all duration-300 text-[16px]"
+                className="block w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-tg-secondary focus:outline-none focus:border-tg-accent/50 focus:ring-1 focus:ring-tg-accent/50 transition-all duration-300 text-[16px] backdrop-blur-sm"
                 />
             </div>
 
@@ -170,19 +167,19 @@ const AuthScreen: React.FC = () => {
                 placeholder={t('password')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="block w-full pl-12 pr-4 py-3.5 bg-tg-sidebar border-2 border-tg-border rounded-xl text-white placeholder-tg-secondary focus:outline-none focus:border-tg-accent transition-all duration-300 text-[16px]"
+                className="block w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-tg-secondary focus:outline-none focus:border-tg-accent/50 focus:ring-1 focus:ring-tg-accent/50 transition-all duration-300 text-[16px] backdrop-blur-sm"
                 />
             </div>
             </div>
 
-            <div className="pt-2">
+            <div className="pt-4">
             <button
                 onClick={handleSubmit}
                 disabled={!isFormValid || loading}
-                className={`w-full py-4 rounded-xl font-bold text-lg transition-all duration-300 transform active:scale-95 flex items-center justify-center ${
+                className={`w-full py-4 rounded-2xl font-bold text-lg transition-all duration-300 transform active:scale-[0.98] flex items-center justify-center ${
                 isFormValid && !loading
-                    ? 'bg-tg-accent text-white shadow-lg cursor-pointer' 
-                    : 'bg-tg-sidebar text-tg-secondary opacity-50 cursor-not-allowed border border-tg-border'
+                    ? 'bg-gradient-to-r from-tg-accent to-blue-600 text-white shadow-xl shadow-blue-500/30 cursor-pointer hover:shadow-blue-500/40 hover:brightness-110' 
+                    : 'bg-white/5 text-tg-secondary opacity-50 cursor-not-allowed border border-white/10'
                 }`}
             >
                 {loading ? <Loader2 className="animate-spin" /> : (isRegistering ? t('createAccount') : t('continue'))}
@@ -192,14 +189,14 @@ const AuthScreen: React.FC = () => {
             <div className="flex flex-col items-center space-y-4">
                 <button 
                     onClick={() => { setIsRegistering(!isRegistering); setError(null); }}
-                    className="text-tg-accent hover:underline text-sm font-medium"
+                    className="text-tg-accent hover:text-white transition-colors text-sm font-medium py-2"
                 >
-                    {isRegistering ? t('haveAccount') : t('noAccount')} {isRegistering ? t('login') : t('signup')}
+                    {isRegistering ? t('haveAccount') : t('noAccount')} <span className="underline decoration-tg-accent/50 underline-offset-4">{isRegistering ? t('login') : t('signup')}</span>
                 </button>
 
-                <div className="flex items-center justify-center space-x-2 text-sm text-tg-secondary pb-4">
-                    <ShieldCheck size={16} className="text-tg-online" />
-                    <p>Secure connection established</p>
+                <div className="flex items-center justify-center space-x-2 text-sm text-tg-secondary pb-4 opacity-70">
+                    <ShieldCheck size={14} className="text-tg-online" />
+                    <p className="text-xs font-medium">Secure connection established</p>
                 </div>
             </div>
         </div>

@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { Check, CheckCheck, FileText, Gift as GiftIcon, Zap, User as UserIcon } from 'lucide-react';
+import { Check, CheckCheck, FileText, Gift as GiftIcon, Zap, User as UserIcon, Languages } from 'lucide-react';
 import { Message } from '../types.ts';
+import { useLanguage } from '../LanguageContext.tsx';
 
 interface MessageBubbleProps {
   message: Message;
@@ -31,6 +32,9 @@ const formatText = (text: string) => {
     return part;
   });
 };
+
+const NEWS_UPDATE_EN_SUBSTRING = "Update v0.0.1.2: Fixed Upload Skidding";
+const NEWS_UPDATE_RU = `🚀 **Обновление v0.0.1.2 уже здесь!**\n\nМы услышали ваши отзывы! Это обновление обеспечивает более плавную работу и новые мощные инструменты.\n\n📸 **Мгновенная загрузка**: Мы исправили проблему «проскальзывания». Внедрен новый движок сжатия на клиенте — фото загружаются мгновенно.\n\n💎 **Баланс Zippers**: Теперь точный баланс виден в Настройках.\n\n⚡ **Стабильность**: Улучшена производительность и исправлены ошибки.\n\nОбновление установлено автоматически. Наслаждайтесь!`;
 
 // 3D Dice Component
 const Dice: React.FC<{ value: number }> = ({ value }) => {
@@ -167,7 +171,10 @@ const Dart: React.FC<{ value: number }> = ({ value }) => {
 };
 
 const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOutgoing, onViewGift }) => {
+  const { t } = useLanguage();
   const [animKey, setAnimKey] = useState(0);
+  const [isTranslated, setIsTranslated] = useState(false);
+  
   const isMedia = message.type === 'image' || message.type === 'video';
   const isFile = message.type === 'file';
   const isGift = message.type === 'gift' && message.giftData;
@@ -179,6 +186,16 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOutgoing, onVi
   const triggerAnim = () => {
     setAnimKey(prev => prev + 1);
   };
+
+  const getTranslatedText = (original: string) => {
+      // Hardcoded translation for the specific news update demo
+      if (original.includes(NEWS_UPDATE_EN_SUBSTRING)) {
+          return NEWS_UPDATE_RU;
+      }
+      return original + "\n\n(Translation unavailable in demo)";
+  };
+
+  const currentText = isTranslated && message.text ? getTranslatedText(message.text) : message.text;
   
   // Interactive Emoji Logic
   if (message.interactiveEmoji) {
@@ -347,7 +364,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOutgoing, onVi
 
   return (
     <div 
-      className={`relative max-w-[85%] px-3 py-1.5 rounded-[18px] shadow-sm transition-all duration-300 hover:shadow-md animate-fadeIn ${
+      className={`relative max-w-[85%] px-3 py-1.5 rounded-[18px] shadow-sm transition-all duration-300 hover:shadow-md animate-fadeIn group/bubble ${
         isOutgoing 
           ? 'bg-tg-bubbleOut text-white rounded-tr-[4px] ml-12' 
           : 'bg-tg-bubbleIn text-white rounded-tl-[4px] mr-12'
@@ -355,9 +372,19 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOutgoing, onVi
     >
       <div className="pr-14 min-w-[60px]">
         <p className="text-[15px] whitespace-pre-wrap break-words leading-[1.4] selection:bg-white/20">
-          {formatText(message.text || '')}
+          {formatText(currentText || '')}
         </p>
       </div>
+
+      {!isOutgoing && message.text && (
+          <button 
+              onClick={(e) => { e.stopPropagation(); setIsTranslated(!isTranslated); }}
+              className="mt-1 flex items-center space-x-1 text-[10px] font-bold text-tg-accent hover:text-white transition-colors bg-white/5 hover:bg-white/10 rounded px-1.5 py-0.5 w-fit mb-0.5"
+          >
+              <Languages size={10} />
+              <span>{isTranslated ? t('showOriginal') : t('translate')}</span>
+          </button>
+      )}
       
       <div className="absolute bottom-1 right-2 flex items-center space-x-1 select-none pointer-events-none opacity-80">
         <span className="text-[10px] font-medium text-white/70">{message.timestamp}</span>

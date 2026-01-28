@@ -1,9 +1,7 @@
 
 import { Language } from './types.ts';
 
-// Added missing translations for all languages defined in Language type to satisfy Record<Language, any>
-export const translations: Record<Language, any> = {
-  ru: {
+const ru = {
     appName: 'HouseGram',
     online: 'в сети',
     offline: 'был(а) недавно',
@@ -166,8 +164,11 @@ export const translations: Record<Language, any> = {
     maintenanceTitle: 'Технические работы',
     maintenanceDesc: 'Мы обновляем HouseGram, чтобы сделать его еще лучше. Пожалуйста, зайдите позже.',
     maintenanceSub: 'Наши серверы проходят плановое обслуживание.',
-  },
-  en: {
+    translate: 'Перевести',
+    showOriginal: 'Показать оригинал',
+};
+
+const en = {
     appName: 'HouseGram',
     online: 'online',
     offline: 'last seen recently',
@@ -207,7 +208,7 @@ export const translations: Record<Language, any> = {
     createChannel: 'New Channel',
     contacts: 'Contacts',
     calls: 'Calls',
-    saved: 'Favorites', // Changed to Favorites
+    saved: 'Favorites',
     cloudStorage: 'Cloud Storage',
     invite: 'Invite Friends',
     langName: 'English',
@@ -330,6 +331,17 @@ export const translations: Record<Language, any> = {
     maintenanceTitle: 'System Maintenance',
     maintenanceDesc: 'We are updating HouseGram to make it even better. Please check back soon.',
     maintenanceSub: 'Our servers are undergoing scheduled maintenance.',
-  },
-  es: {}, de: {}, fr: {}, tr: {}, it: {}
+    translate: 'Translate',
+    showOriginal: 'Show Original',
+};
+
+// Map other languages to English to prevent missing translation errors
+export const translations: Record<Language, any> = {
+  ru,
+  en,
+  es: en,
+  de: en,
+  fr: en,
+  tr: en,
+  it: en
 };

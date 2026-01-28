@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Check, CheckCheck, Mic, ShieldCheck, BadgeCheck, Bookmark } from 'lucide-react';
+import { Check, CheckCheck, Mic, ShieldCheck, BadgeCheck, Bookmark, FlaskConical } from 'lucide-react';
 import { Chat, isUserOnline, User } from '../types.ts';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase.ts';
@@ -79,7 +79,7 @@ const ChatItem: React.FC<ChatItemProps> = ({ chat, onClick, currentUser }) => {
       </div>
 
       {/* Content */}
-      <div className="ml-4 flex-1 min-w-0 border-b border-tg-border/30 pb-2.5 group-last:border-none">
+      <div className="ml-4 flex-1 min-w-0 border-b border-black/5 dark:border-white/5 pb-2.5 group-last:border-none">
         <div className="flex justify-between items-baseline mb-0.5">
           <h3 className="text-[16px] font-bold text-white truncate pr-2 group-hover:text-tg-accent transition-colors flex items-center">
             {isSavedMessages ? t('saved') : liveUser.name}
@@ -90,6 +90,9 @@ const ChatItem: React.FC<ChatItemProps> = ({ chat, onClick, currentUser }) => {
                     ) : liveUser.isOfficial ? (
                     <BadgeCheck size={14} className="ml-1 text-blue-500" fill="#2AABEE" stroke="white" />
                     ) : null}
+                    {liveUser.isTester && (
+                      <FlaskConical size={14} className="ml-1 text-purple-400" strokeWidth={2.5} />
+                    )}
                 </>
             )}
           </h3>

@@ -27,11 +27,11 @@ const DataStorageScreen: React.FC<DataStorageScreenProps> = ({ onBack, storageSt
 
   return (
     <div className="flex flex-col h-full w-full bg-tg-bg overflow-hidden animate-fadeIn relative">
-      <div className="z-20 bg-tg-sidebar px-4 py-3 flex items-center shadow-md border-b border-tg-border">
-        <button onClick={onBack} className="p-2 -ml-2 text-white hover:bg-white/5 rounded-full transition-colors active:scale-90">
+      <div className="z-20 bg-tg-sidebar px-4 py-3 flex items-center shadow-md border-b border-black/5 dark:border-white/5">
+        <button onClick={onBack} className="p-2 -ml-2 text-tg-text hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors active:scale-90">
           <ArrowLeft size={24} />
         </button>
-        <span className="text-white font-bold text-xl ml-4">{t('data')}</span>
+        <span className="text-tg-text font-bold text-xl ml-4">{t('data')}</span>
       </div>
 
       <div className="flex-1 overflow-y-auto no-scrollbar p-6">
@@ -46,6 +46,7 @@ const DataStorageScreen: React.FC<DataStorageScreenProps> = ({ onBack, storageSt
                         fill="transparent" 
                         stroke="#17212B" 
                         strokeWidth="16" 
+                        className="stroke-black/10 dark:stroke-white/5"
                     />
                     {/* Progress Circle */}
                     <circle 
@@ -60,13 +61,13 @@ const DataStorageScreen: React.FC<DataStorageScreenProps> = ({ onBack, storageSt
                     />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-3xl font-black text-white">{percentage.toFixed(1)}%</span>
+                    <span className="text-3xl font-black text-tg-text">{percentage.toFixed(1)}%</span>
                     <span className="text-xs text-tg-secondary uppercase font-bold tracking-wider">Used</span>
                 </div>
             </div>
 
             <div className="text-center">
-                <p className="text-white text-lg font-bold">
+                <p className="text-tg-text text-lg font-bold">
                     {formatBytes(totalUsed)} <span className="text-tg-secondary font-normal">of</span> {formatBytes(MAX_STORAGE_BYTES)}
                 </p>
                 <p className="text-tg-secondary text-sm mt-1">
@@ -76,25 +77,25 @@ const DataStorageScreen: React.FC<DataStorageScreenProps> = ({ onBack, storageSt
         </div>
 
         {/* Detailed Breakdown */}
-        <div className="bg-tg-sidebar rounded-xl overflow-hidden border border-tg-border/50">
-            <div className="px-5 py-4 flex items-center justify-between border-b border-tg-border/50">
+        <div className="bg-tg-sidebar rounded-xl overflow-hidden border border-black/5 dark:border-white/5">
+            <div className="px-5 py-4 flex items-center justify-between border-b border-black/5 dark:border-white/5">
                 <div className="flex items-center space-x-3">
                     <div className="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-500 flex items-center justify-center">
                         <Image size={18} />
                     </div>
-                    <span className="text-white font-medium">Photos & Videos</span>
+                    <span className="text-tg-text font-medium">Photos & Videos</span>
                 </div>
-                <span className="text-white font-bold">{formatBytes(storageStats.media)}</span>
+                <span className="text-tg-text font-bold">{formatBytes(storageStats.media)}</span>
             </div>
             
-            <div className="px-5 py-4 flex items-center justify-between border-b border-tg-border/50">
+            <div className="px-5 py-4 flex items-center justify-between border-b border-black/5 dark:border-white/5">
                 <div className="flex items-center space-x-3">
                     <div className="w-8 h-8 rounded-lg bg-orange-500/20 text-orange-500 flex items-center justify-center">
                         <FileText size={18} />
                     </div>
-                    <span className="text-white font-medium">Files</span>
+                    <span className="text-tg-text font-medium">Files</span>
                 </div>
-                <span className="text-white font-bold">{formatBytes(storageStats.files)}</span>
+                <span className="text-tg-text font-bold">{formatBytes(storageStats.files)}</span>
             </div>
 
             <div className="px-5 py-4 flex items-center justify-between">
@@ -102,9 +103,9 @@ const DataStorageScreen: React.FC<DataStorageScreenProps> = ({ onBack, storageSt
                     <div className="w-8 h-8 rounded-lg bg-green-500/20 text-green-500 flex items-center justify-center">
                         <Mic size={18} />
                     </div>
-                    <span className="text-white font-medium">Voice Messages</span>
+                    <span className="text-tg-text font-medium">Voice Messages</span>
                 </div>
-                <span className="text-white font-bold">{formatBytes(storageStats.voice)}</span>
+                <span className="text-tg-text font-bold">{formatBytes(storageStats.voice)}</span>
             </div>
         </div>
 
