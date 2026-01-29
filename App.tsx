@@ -167,8 +167,11 @@ const AppContent: React.FC = () => {
     }
   }, [screen, currentUser]);
 
-  if (isLoading) return <div className="h-[100dvh] w-full bg-tg-bg flex items-center justify-center text-white">Loading HouseGram...</div>;
-  if (maintenanceMode && currentUser && !currentUser.isAdmin && currentUser.email !== 'goh@gmail.com') return <LanguageProvider><MaintenanceScreen /></LanguageProvider>;
+  if (isLoading) return <div className="h-[100dvh] w-full bg-tg-bg flex items-center justify-center text-white font-bold tracking-widest animate-pulse">LOADING...</div>;
+
+  // КРИТИЧЕСКОЕ ИЗМЕНЕНИЕ: Если режим обслуживания включен, показываем экран всем, кто не админ
+  const isAdmin = currentUser?.isAdmin || currentUser?.email?.toLowerCase() === 'goh@gmail.com';
+  if (maintenanceMode && !isAdmin) return <LanguageProvider><MaintenanceScreen /></LanguageProvider>;
 
   return (
     <div className="flex w-full bg-tg-bg overflow-hidden relative" style={{ height: '100dvh' }}>
@@ -181,7 +184,7 @@ const AppContent: React.FC = () => {
         </div>
       )}
       {screen === AppScreen.CHAT && activeChat && currentUser && (
-        <ChatScreen chat={activeChat} currentUser={currentUser} isBlocked={false} onBack={handleBackToMain} onOpenUserInfo={(u) => { setViewingUser(u); setScreen(AppScreen.USER_INFO); }} storageUsage={storageStats.total} onFileUpload={handleFileUpload} />
+        <ChatScreen chat={activeChat} currentUser={currentUser} onBack={handleBackToMain} onOpenUserInfo={(u) => { setViewingUser(u); setScreen(AppScreen.USER_INFO); }} />
       )}
       {screen === AppScreen.PROFILE && currentUser && (
         <ProfileScreen user={currentUser} onBack={() => setScreen(AppScreen.MAIN)} onUpdate={(u) => { setCurrentUser(u); if (currentUser?.id) setDoc(doc(db, "users", currentUser.id), u, { merge: true }); }} onLogout={handleLogout} onOpenFeatures={() => setScreen(AppScreen.FEATURES)} onOpenPrivacy={() => setScreen(AppScreen.PRIVACY)} onOpenFAQ={() => setScreen(AppScreen.FAQ)} onOpenNotifications={() => setScreen(AppScreen.NOTIFICATIONS)} onOpenGuide={() => setScreen(AppScreen.GUIDE)} onOpenDataStorage={() => setScreen(AppScreen.DATA_STORAGE)} />
@@ -189,7 +192,7 @@ const AppContent: React.FC = () => {
       {screen === AppScreen.USER_INFO && viewingUser && currentUser && (
         <UserInfoScreen user={viewingUser} currentUser={currentUser} isBlocked={false} onBack={() => setScreen(AppScreen.CHAT)} onBlock={() => {}} onDelete={() => handleBackToMain()} />
       )}
-      {screen === AppScreen.ADMIN && (currentUser?.isAdmin || currentUser?.email === 'goh@gmail.com') && (
+      {screen === AppScreen.ADMIN && isAdmin && (
           <AdminPanel onBack={() => setScreen(AppScreen.MAIN)} users={allUsers} bannedUserIds={systemBannedUserIds} onBanUser={(uid) => setSystemBannedUserIds(p => new Set(p).add(uid))} onUnbanUser={(uid) => setSystemBannedUserIds(p => { const n = new Set(p); n.delete(uid); return n; })} />
       )}
       {screen === AppScreen.FEATURES && <FeaturesScreen onBack={() => setScreen(AppScreen.PROFILE)} />}
