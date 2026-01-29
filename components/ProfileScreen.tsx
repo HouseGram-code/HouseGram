@@ -2,11 +2,11 @@
 import React, { useState, useRef } from 'react';
 import { 
   ArrowLeft, Camera, Check, Info, AtSign, Mail, Edit2, 
-  Bell, Lock, Shield, Globe, HelpCircle, LogOut, BookOpen, ShieldCheck, ShieldAlert, Image, FileText, Link, Zap, Loader2, BadgeCheck, FlaskConical
+  Bell, Lock, Shield, Globe, HelpCircle, LogOut, BookOpen, ShieldCheck, ShieldAlert, Image, FileText, Link, Zap, Loader2, BadgeCheck, FlaskConical, Star, Gift
 } from 'lucide-react';
 import { User, Language } from '../types.ts';
 import { useLanguage } from '../LanguageContext.tsx';
-import { UPLOAD_API_URL, API_KEY } from '../constants.ts';
+import { UPLOAD_API_URL } from '../constants.ts';
 
 interface ProfileScreenProps {
   user: User;
@@ -34,7 +34,8 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const [isScrolled, setIsScrolled] = useState(false);
   const [showLanguagePicker, setShowLanguagePicker] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'media' | 'files' | 'links'>('media');
+  const [activeTab, setActiveTab] = useState<'gifts' | 'media' | 'files' | 'links'>('gifts');
+  const [viewingGift, setViewingGift] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -53,8 +54,8 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 3.5 * 1024 * 1024) {
-      alert("Avatar file is too large! Maximum 3.5MB.");
+    if (file.size > 10 * 1024 * 1024) {
+      alert("Avatar file is too large! Maximum 10MB.");
       return;
     }
 
@@ -65,8 +66,8 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({
         video.preload = 'metadata';
         video.onloadedmetadata = () => {
           window.URL.revokeObjectURL(video.src);
-          if (video.duration > 10) {
-            alert("Video avatar must be 10 seconds or less.");
+          if (video.duration > 15) {
+            alert("Video avatar must be 15 seconds or less.");
             setIsUploading(false);
             return;
           }
@@ -88,7 +89,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({
             body: formData
         });
         
-        if(!response.ok) throw new Error(`Upload failed with status: ${response.status}`);
+        if(!response.ok) throw new Error(`Upload failed`);
         
         const data = await response.json();
         if(data.success && data.url) {
@@ -98,8 +99,11 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({
             throw new Error(data.error || "Unknown error");
         }
     } catch(e: any) {
-        console.error("Avatar Upload Error:", e);
-        alert(e.message || "Failed to upload avatar. Please try a smaller file.");
+        console.warn("Avatar Upload Error (using local preview as fallback):", e);
+        // Fallback to local object URL if server fails
+        const localUrl = URL.createObjectURL(file);
+        setAvatarUrl(localUrl);
+        setIsVideo(isVideoFile);
     } finally {
         setIsUploading(false);
     }
@@ -213,19 +217,47 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({
           </div>
         </div>
 
-        {/* Media/Files/Links Tabs - Removed Gifts */}
-        {user.gifts && user.gifts.length > 0 && (
-            <div className="mt-4 bg-tg-sidebar border-y border-black/5 dark:border-white/5 min-h-[120px]">
-                <div className="flex border-b border-black/5 dark:border-white/5">
-                    <TabButton active={activeTab === 'media'} label="Media" icon={<Image size={16} />} onClick={() => setActiveTab('media')} />
-                    <TabButton active={activeTab === 'files'} label="Files" icon={<FileText size={16} />} onClick={() => setActiveTab('files')} />
-                    <TabButton active={activeTab === 'links'} label="Links" icon={<Link size={16} />} onClick={() => setActiveTab('links')} />
-                </div>
-                <div className="p-4">
-                    <div className="py-8 text-center text-tg-secondary text-sm opacity-60">No items found</div>
-                </div>
+        {/* Media/Files/Links/Gifts Tabs */}
+        <div className="mt-4 bg-tg-sidebar border-y border-black/5 dark:border-white/5 min-h-[300px]">
+            <div className="flex border-b border-black/5 dark:border-white/5">
+                <TabButton active={activeTab === 'gifts'} label="Gifts" icon={<Gift size={16} />} onClick={() => setActiveTab('gifts')} />
+                <TabButton active={activeTab === 'media'} label="Media" icon={<Image size={16} />} onClick={() => setActiveTab('media')} />
+                <TabButton active={activeTab === 'files'} label="Files" icon={<FileText size={16} />} onClick={() => setActiveTab('files')} />
+                <TabButton active={activeTab === 'links'} label="Links" icon={<Link size={16} />} onClick={() => setActiveTab('links')} />
             </div>
-        )}
+            <div className="p-4">
+                {activeTab === 'gifts' && (
+                    <div className="grid grid-cols-3 gap-3">
+                        {user.gifts && user.gifts.length > 0 ? (
+                            user.gifts.map((gift, idx) => (
+                                <div 
+                                    key={`${gift.id}-${idx}`} 
+                                    onClick={() => setViewingGift(gift)}
+                                    className="bg-black/5 dark:bg-[#242f3d] rounded-xl p-2 flex flex-col items-center relative overflow-hidden group shadow-lg cursor-pointer hover:bg-black/10 dark:hover:bg-[#2b3849] transition-all hover:scale-105 active:scale-95"
+                                >
+                                    <div className="absolute inset-0 opacity-20" style={{ backgroundColor: gift.backgroundColor }} />
+                                    <img src={gift.imageUrl} className="w-12 h-12 object-contain relative z-10 mb-1" alt={gift.name} />
+                                    <div className="flex items-center space-x-1 bg-black/20 rounded-full px-2 py-0.5 relative z-10">
+                                        <span className="text-[10px] text-amber-400 font-bold">{gift.price}</span>
+                                        <Star size={8} className="text-amber-400 fill-amber-400" />
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                             <div className="col-span-3 py-8 flex flex-col items-center justify-center text-center opacity-50 space-y-2">
+                                <div className="w-16 h-16 bg-black/5 dark:bg-white/5 rounded-full flex items-center justify-center">
+                                    <Gift size={32} className="text-tg-secondary" />
+                                </div>
+                                <p className="text-tg-secondary text-sm">No gifts received yet.</p>
+                            </div>
+                        )}
+                    </div>
+                )}
+                {activeTab !== 'gifts' && (
+                    <div className="py-8 text-center text-tg-secondary text-sm opacity-60">No items found</div>
+                )}
+            </div>
+        </div>
 
         <div className="mt-4 bg-tg-sidebar border-y border-black/5 dark:border-white/5">
           <div className="px-5 py-2 text-xs font-bold text-tg-accent uppercase tracking-widest bg-black/5 dark:bg-white/5">{t('settings')}</div>

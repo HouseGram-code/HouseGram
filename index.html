@@ -6,15 +6,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#0E1621">
-    <title>HouseGram</title>
+    <meta name="theme-color" content="#075E54">
+    <title>WhatsAppGram</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
-        darkMode: 'class', // Enable class-based dark mode
+        darkMode: 'class',
         theme: {
           extend: {
             colors: {
+              wa: {
+                dark: '#075E54',
+                teal: '#128C7E',
+                green: '#25D366',
+                light: '#DCF8C6',
+                blue: '#34B7F1',
+                bg: '#ECE5DD',
+                chat: '#E5DDD5',
+                darkBg: '#111b21',
+                darkSidebar: '#202c33',
+                darkBubbleOut: '#056162',
+                darkBubbleIn: '#262d31'
+              },
               tg: {
                 bg: 'var(--tg-bg)',
                 sidebar: 'var(--tg-sidebar)',
@@ -25,54 +38,24 @@
                 online: '#4DD964',
                 bubbleOut: 'var(--tg-bubble-out)',
                 bubbleIn: 'var(--tg-bubble-in)',
-                teal: '#0088CC'
               }
             },
             backgroundImage: {
-              'tg-pattern': "url('https://www.transparenttextures.com/patterns/carbon-fibre.png')"
+              'wa-pattern': "url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')"
             },
             animation: {
-              'plane-float': 'planeFloat 3s ease-in-out infinite',
-              'form-entrance': 'formEntrance 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
-              'fadeIn': 'fadeIn 0.3s ease-out forwards',
-              'emoji-pop': 'emojiPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
-              'heart-beat': 'heartBeat 1.5s ease-in-out infinite',
-              'breathe': 'breathe 3s ease-in-out infinite',
-              'fly-away': 'flyAway 1.5s cubic-bezier(0.6, -0.28, 0.735, 0.045) forwards',
-              'spin-slow': 'spin 8s linear infinite',
+              'form-entrance': 'formEntrance 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+              'fadeIn': 'fadeIn 0.2s ease-out forwards',
+              'fly-away': 'flyAway 1s cubic-bezier(0.6, -0.28, 0.735, 0.045) forwards',
             },
             keyframes: {
-              planeFloat: {
-                '0%, 100%': { transform: 'translateY(0) rotate(-12deg)' },
-                '50%': { transform: 'translateY(-8px) rotate(-8deg)' },
-              },
               formEntrance: {
-                '0%': { opacity: '0', transform: 'translateY(20px)' },
-                '100%': { opacity: '1', transform: 'translateY(0)' },
+                '0%': { opacity: '0', transform: 'scale(0.95)' },
+                '100%': { opacity: '1', transform: 'scale(1)' },
               },
               fadeIn: {
                 '0%': { opacity: '0' },
                 '100%': { opacity: '1' },
-              },
-              emojiPop: {
-                '0%': { transform: 'scale(0.5) translateY(10px)', opacity: '0' },
-                '100%': { transform: 'scale(1) translateY(0)', opacity: '1' },
-              },
-              heartBeat: {
-                '0%, 100%': { transform: 'scale(1)' },
-                '14%': { transform: 'scale(1.3)' },
-                '28%': { transform: 'scale(1)' },
-                '42%': { transform: 'scale(1.3)' },
-                '70%': { transform: 'scale(1)' },
-              },
-              breathe: {
-                '0%, 100%': { transform: 'scale(1)' },
-                '50%': { transform: 'scale(1.05)' },
-              },
-              flyAway: {
-                '0%': { transform: 'translate(0, 0) scale(1) rotate(0deg)' },
-                '20%': { transform: 'translate(-10px, 10px) scale(0.9) rotate(-5deg)' },
-                '100%': { transform: 'translate(100vw, -100vh) scale(0.4) rotate(45deg)', opacity: '0' },
               }
             }
           }
@@ -80,167 +63,64 @@
       }
     </script>
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
       
-      /* CSS Variables for Theming */
       :root {
-        --tg-bg: #0E1621;
-        --tg-sidebar: #17212B;
-        --tg-accent: #2AABEE;
-        --tg-text: #FFFFFF;
-        --tg-secondary: #6C7883;
-        --tg-border: rgba(255, 255, 255, 0.08); /* Subtle white in dark mode */
-        --tg-bubble-out: #2AABEE;
-        --tg-bubble-in: #182533;
+        --tg-bg: #FFFFFF;
+        --tg-sidebar: #075E54;
+        --tg-accent: #25D366;
+        --tg-text: #000000;
+        --tg-secondary: #667781;
+        --tg-border: #e9edef;
+        --tg-bubble-out: #DCF8C6;
+        --tg-bubble-in: #FFFFFF;
       }
 
-      /* Light Theme Override */
-      [data-theme='light'] {
-        --tg-bg: #FFFFFF;
-        --tg-sidebar: #F4F4F5;
-        --tg-accent: #3390EC;
-        --tg-text: #000000;
-        --tg-secondary: #707579;
-        --tg-border: #E4E4E5; /* Standard gray in light mode */
-        --tg-bubble-out: #3390EC;
-        --tg-bubble-in: #F1F1F1;
+      [data-theme='dark'] {
+        --tg-bg: #111b21;
+        --tg-sidebar: #202c33;
+        --tg-accent: #00a884;
+        --tg-text: #e9edef;
+        --tg-secondary: #8696a0;
+        --tg-border: #222d34;
+        --tg-bubble-out: #056162;
+        --tg-bubble-in: #202c33;
       }
 
       body {
-        font-family: 'Inter', sans-serif;
+        font-family: 'Roboto', sans-serif;
         background-color: var(--tg-bg);
         color: var(--tg-text);
         margin: 0;
         overflow: hidden;
-        -webkit-tap-highlight-color: transparent;
-        transition: background-color 0.3s ease, color 0.3s ease;
       }
       
-      .bg-tg-sidebar { background-color: var(--tg-sidebar); }
-      .bg-tg-bg { background-color: var(--tg-bg); }
-      .text-tg-text { color: var(--tg-text); }
-      .text-tg-secondary { color: var(--tg-secondary); }
-      .border-tg-border { border-color: var(--tg-border); }
-
-      /* Custom Scrollbar to prevent white stripes */
-      ::-webkit-scrollbar {
-        width: 6px;
-        height: 6px;
-      }
-      ::-webkit-scrollbar-track {
-        background: transparent;
-      }
-      ::-webkit-scrollbar-thumb {
-        background: rgba(128, 128, 128, 0.3);
-        border-radius: 3px;
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background: rgba(128, 128, 128, 0.5);
-      }
-
-      .no-scrollbar::-webkit-scrollbar { display: none; }
-      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      
-      /* Dynamic Safe Area Padding */
       .pb-safe { padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 20px)); }
       .pt-safe { padding-top: max(12px, env(safe-area-inset-top)); }
       
-      /* 3D Dice Styles */
-      .dice-scene {
-        perspective: 600px;
-        width: 80px;
-        height: 80px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .dice {
-        width: 50px;
-        height: 50px;
-        position: relative;
-        transform-style: preserve-3d;
-        transition: transform 1s cubic-bezier(0.2, 0.8, 0.2, 1);
-      }
-      .dice-face {
-        position: absolute;
-        width: 50px;
-        height: 50px;
-        background: linear-gradient(145deg, #ffffff, #f0f0f0);
-        border-radius: 10px;
-        border: 1px solid #e5e7eb;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
-      }
-      .dice-dot {
-        border-radius: 50%;
-        background-color: #17212B;
-        box-shadow: inset 0 1px 1px rgba(0,0,0,0.5);
-      }
-      .dice-dot.accent {
-        background-color: #ef4444; /* Red for the 1 face */
-      }
+      .wa-header-shadow { box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
       
-      .face-1 { transform: translateZ(25px); }
-      .face-6 { transform: rotateY(180deg) translateZ(25px); }
-      .face-2 { transform: rotateX(-90deg) translateZ(25px); }
-      .face-5 { transform: rotateX(90deg) translateZ(25px); }
-      .face-3 { transform: rotateY(90deg) translateZ(25px); }
-      .face-4 { transform: rotateY(-90deg) translateZ(25px); }
-
-      .dots-container {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          grid-template-rows: repeat(3, 1fr);
-          width: 32px;
-          height: 32px;
-          padding: 2px;
+      /* WhatsApp Specific Bubbles */
+      .bubble-tail-out::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: -8px;
+        width: 15px;
+        height: 15px;
+        background: inherit;
+        clip-path: polygon(0 0, 0% 100%, 100% 0);
       }
-      .dot-placeholder { width: 100%; height: 100%; }
-      .dot-center { grid-column: 2; grid-row: 2; }
-      .dot-tl { grid-column: 1; grid-row: 1; }
-      .dot-tr { grid-column: 3; grid-row: 1; }
-      .dot-bl { grid-column: 1; grid-row: 3; }
-      .dot-br { grid-column: 3; grid-row: 3; }
-      .dot-ml { grid-column: 1; grid-row: 2; }
-      .dot-mr { grid-column: 3; grid-row: 2; }
-
-      /* Basketball Animation */
-      @keyframes ball-swish {
-        0% { transform: translate(0, 0) scale(1); }
-        40% { transform: translate(50px, -90px) scale(0.9); }
-        60% { transform: translate(80px, -70px) scale(0.8); z-index: 1; } /* At hoop height */
-        80% { transform: translate(90px, 20px) scale(0.8); z-index: 0; } /* Through hoop */
-        100% { transform: translate(90px, 80px) scale(0.8); opacity: 0; }
+      .bubble-tail-in::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -8px;
+        width: 15px;
+        height: 15px;
+        background: inherit;
+        clip-path: polygon(100% 0, 100% 100%, 0 0);
       }
-      @keyframes ball-miss {
-        0% { transform: translate(0, 0) scale(1); }
-        40% { transform: translate(60px, -90px) scale(0.9); }
-        60% { transform: translate(100px, -60px) scale(0.8); } /* Hit rim */
-        100% { transform: translate(130px, 40px) scale(0.8); opacity: 0; }
-      }
-      .anim-swish { animation: ball-swish 1.2s ease-in-out forwards; }
-      .anim-miss { animation: ball-miss 1s ease-in-out forwards; }
-
-      /* Dart Animation */
-      @keyframes dart-throw {
-        0% { transform: translate(-20px, 40px) scale(2) rotate(-45deg); opacity: 0; }
-        20% { opacity: 1; }
-        100% { transform: var(--target-pos) scale(1) rotate(-45deg); }
-      }
-      .anim-dart { animation: dart-throw 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
-
-      /* Snow Animation */
-      @keyframes snow-fall {
-        0% { transform: translateY(-10px); }
-        100% { transform: translateY(110vh); }
-      }
-      @keyframes snow-sway {
-        0%, 100% { margin-left: 0; }
-        50% { margin-left: 20px; }
-      }
-
     </style>
 <script type="importmap">
 {
@@ -250,13 +130,12 @@
     "react-dom/client": "https://esm.sh/react-dom@18.3.1/client",
     "lucide-react": "https://esm.sh/lucide-react@0.460.0?deps=react@18.3.1",
     "emoji-picker-react": "https://esm.sh/emoji-picker-react@4.5.16?deps=react@18.3.1,react-dom@18.3.1",
-    "firebase/app": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
-    "firebase/auth": "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js",
-    "firebase/firestore": "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js",
-    "firebase/storage": "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js",
-    "firebase/analytics": "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js",
-    "react-dom/": "https://esm.sh/react-dom@18.3.1/",
-    "react/": "https://esm.sh/react@18.3.1/",
+    "firebase/app": "https://esm.sh/firebase@10.8.0/app",
+    "firebase/auth": "https://esm.sh/firebase@10.8.0/auth",
+    "firebase/firestore": "https://esm.sh/firebase@10.8.0/firestore",
+    "firebase/storage": "https://esm.sh/firebase@10.8.0/storage",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "react/": "https://esm.sh/react@^19.2.4/",
     "firebase/": "https://esm.sh/firebase@^12.8.0/"
   }
 }

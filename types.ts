@@ -5,7 +5,6 @@ export interface Gift {
   price: number;
   imageUrl: string;
   backgroundColor?: string;
-  // Specific properties for the message instance
   comment?: string;
   isAnonymous?: boolean;
   fromUserId?: string;
@@ -29,10 +28,10 @@ export interface User {
   isBanned?: boolean;
   isOfficial?: boolean;
   isAdmin?: boolean;
-  isTester?: boolean; // New field for tester badge
-  isPremium?: boolean; // New field for Premium status
-  gifts?: Gift[]; // New field for received gifts
-  zippers?: number; // Renamed from stars
+  isTester?: boolean; 
+  isPremium?: boolean; 
+  gifts?: Gift[]; 
+  zippers?: number; 
 }
 
 export interface Message {
@@ -41,7 +40,7 @@ export interface Message {
   text?: string;
   timestamp: string;
   isRead: boolean;
-  type: 'text' | 'voice' | 'image' | 'video' | 'file' | 'audio' | 'gift'; // Added 'gift'
+  type: 'text' | 'voice' | 'image' | 'video' | 'file' | 'audio' | 'gift' | 'sticker';
   duration?: string;
   audioUrl?: string;
   mediaUrl?: string;
@@ -51,7 +50,7 @@ export interface Message {
     type: 'dice' | 'basketball' | 'dart';
     value: number;
   };
-  giftData?: Gift; // New field for gift details
+  giftData?: Gift;
   scheduledTimestamp?: number;
 }
 
@@ -63,6 +62,7 @@ export interface Chat {
   type: 'private' | 'group' | 'channel';
   isReadOnly?: boolean;
   typing?: Record<string, number>; 
+  wallpaper?: string;
 }
 
 export interface StorageStats {
@@ -90,35 +90,17 @@ export enum AppScreen {
 export type Language = 'ru' | 'en' | 'es' | 'de' | 'fr' | 'tr' | 'it';
 
 export const isUserOnline = (user: User, viewer?: User): boolean => {
-  // If the target user hides their status, nobody can see it (unless we add an override for that too, but standard is target privacy rules)
-  if (user.lastSeenPrivacy === 'nobody') return false;
-  
-  // If the viewer hides their own status, they usually can't see others.
-  // Exception: Viewer is Premium.
-  if (viewer && viewer.lastSeenPrivacy === 'nobody' && !viewer.isPremium) return false;
-
+  if (user.lastSeenPrivacy === 'nobody' && (!viewer || !viewer.isPremium)) return false;
   if (typeof user.lastSeen === 'number') {
     const now = Date.now();
-    const diff = now - user.lastSeen;
-    return diff < 120000; 
+    return now - user.lastSeen < 120000; 
   }
   return false;
 };
 
 export const formatLastSeen = (user: User, t: (k: string) => string, viewer?: User): string => {
   if (isUserOnline(user, viewer)) return t('online');
-  
-  // Logic for hiding last seen
-  if (user.lastSeenPrivacy === 'nobody') {
-      return t('lastSeenRecently');
-  }
-
-  // Reciprocal rule: If viewer hides theirs, they see 'recently' for others
-  // Exception: Viewer is Premium
-  if (viewer && viewer.lastSeenPrivacy === 'nobody' && !viewer.isPremium) {
-      return t('lastSeenRecently');
-  }
-
+  if (user.lastSeenPrivacy === 'nobody' && (!viewer || !viewer.isPremium)) return t('lastSeenRecently');
   if (typeof user.lastSeen === 'number') {
     const date = new Date(user.lastSeen);
     const today = new Date();
@@ -127,5 +109,5 @@ export const formatLastSeen = (user: User, t: (k: string) => string, viewer?: Us
     if (isToday) return `${t('lastSeenAt')} ${timeStr}`;
     return `${t('lastSeenAt')} ${date.toLocaleDateString()} ${timeStr}`;
   }
-  return user.lastSeen && user.lastSeen !== 'now' ? `${t('lastSeenAt')} ${user.lastSeen}` : t('offline');
+  return t('offline');
 };

@@ -1,47 +1,39 @@
 
 import React from 'react';
-import { Settings, Construction, Clock } from 'lucide-react';
+import { Info, MessageCircle, ArrowRight } from 'lucide-react';
 import { useLanguage } from '../LanguageContext.tsx';
 
 const MaintenanceScreen: React.FC = () => {
   const { t } = useLanguage();
 
   return (
-    <div className="flex flex-col items-center justify-center h-[100dvh] w-full bg-[#0E1621] relative overflow-hidden z-[100]">
-      {/* Background Ambience */}
-      <div className="absolute top-[-20%] left-[-20%] w-[140%] h-[140%] bg-[radial-gradient(circle_at_50%_50%,rgba(42,171,238,0.05),transparent_60%)] pointer-events-none" />
-      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.03] pointer-events-none" />
-
-      {/* Main Content */}
-      <div className="relative z-10 flex flex-col items-center px-8 text-center animate-fadeIn">
-        
-        {/* Animated Icon Container */}
-        <div className="relative w-32 h-32 mb-8">
-            <div className="absolute inset-0 bg-tg-accent/10 rounded-full blur-2xl animate-pulse" />
-            <div className="relative w-full h-full flex items-center justify-center">
-                <Settings size={80} className="text-tg-accent animate-[spin_8s_linear_infinite] opacity-80 absolute" />
-                <Construction size={40} className="text-white relative z-10" />
-            </div>
-        </div>
-
-        <h1 className="text-3xl font-black text-white mb-4 tracking-tight">
-          {t('maintenanceTitle')}
-        </h1>
-        
-        <p className="text-lg text-tg-secondary max-w-md leading-relaxed mb-8">
-          {t('maintenanceDesc')}
-        </p>
-
-        <div className="flex items-center space-x-2 px-4 py-2 bg-white/5 rounded-full border border-white/5 shadow-sm">
-            <Clock size={14} className="text-tg-accent" />
-            <span className="text-sm font-medium text-white/70">{t('maintenanceSub')}</span>
-        </div>
-
-        {/* Footer */}
-        <div className="absolute bottom-[-150px] opacity-30 text-xs tracking-[0.2em] font-mono text-tg-secondary">
-            SYSTEM_LOCKED
-        </div>
+    <div className="flex flex-col items-center justify-center h-[100dvh] w-full bg-[#ECE5DD] dark:bg-[#111b21] relative z-[100] p-8">
+      <div className="w-24 h-24 bg-wa-green rounded-3xl flex items-center justify-center mb-8 shadow-2xl animate-bounce">
+          <MessageCircle size={56} className="text-white" />
       </div>
+      
+      <h1 className="text-3xl font-bold text-[#075E54] dark:text-wa-green text-center mb-4">
+         We've moved!
+      </h1>
+      
+      <div className="bg-white dark:bg-wa-darkSidebar p-6 rounded-2xl shadow-xl max-w-sm text-center border border-black/5">
+          <p className="text-tg-text mb-6 leading-relaxed">
+             HouseGram has evolved into a new beautiful experience inspired by WhatsApp. 
+             We've upgraded our systems for better speed and security.
+          </p>
+          
+          <button 
+             onClick={() => window.location.reload()}
+             className="w-full bg-wa-green text-white font-bold py-4 rounded-xl flex items-center justify-center space-x-2 active:scale-95 transition-transform"
+          >
+             <span>Open New WhatsAppGram</span>
+             <ArrowRight size={20} />
+          </button>
+      </div>
+      
+      <p className="mt-10 text-[10px] text-tg-secondary uppercase tracking-[0.3em]">
+          Transition Mode Active
+      </p>
     </div>
   );
 };
