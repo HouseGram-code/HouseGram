@@ -11,7 +11,6 @@ const firebaseConfig = {
   storageBucket: "housegram-50b40.firebasestorage.app",
   messagingSenderId: "524582399076",
   appId: "1:524582399076:web:5e15d993f0087eefd14371"
-  // measurementId removed to prevent Analytics warning
 };
 
 const app = initializeApp(firebaseConfig);

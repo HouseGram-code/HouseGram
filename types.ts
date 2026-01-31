@@ -39,6 +39,7 @@ export interface Message {
   senderId: string;
   text?: string;
   timestamp: string;
+  timestampRaw?: number;
   isRead: boolean;
   type: 'text' | 'voice' | 'image' | 'video' | 'file' | 'audio' | 'gift' | 'sticker';
   duration?: string;
