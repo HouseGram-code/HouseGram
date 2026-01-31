@@ -166,6 +166,12 @@ const ru = {
     maintenanceSub: 'Наши серверы проходят плановое обслуживание.',
     translate: 'Перевести',
     showOriginal: 'Показать оригинал',
+    // Migration
+    migrationTitle: 'Мы переехали!',
+    migrationDesc: 'Этот сайт больше не разрабатывается. Мы перешли на новую, улучшенную версию HouseGram.',
+    goToNewVersion: 'Перейти на новую версию',
+    closeForTesters: 'Закрыть (для тестеров)',
+    adminLogin: 'Вход для админов',
 };
 
 const en = {
@@ -333,6 +339,12 @@ const en = {
     maintenanceSub: 'Our servers are undergoing scheduled maintenance.',
     translate: 'Translate',
     showOriginal: 'Show Original',
+    // Migration
+    migrationTitle: 'We Moved!',
+    migrationDesc: 'This site is no longer under development. We moved to a new, better version of HouseGram.',
+    goToNewVersion: 'Go to New Version',
+    closeForTesters: 'Close (For Testers)',
+    adminLogin: 'Admin Login',
 };
 
 // Map other languages to English to prevent missing translation errors

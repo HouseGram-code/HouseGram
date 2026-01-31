@@ -16,6 +16,7 @@ import DataStorageScreen from './components/DataStorageScreen.tsx';
 import AdminPanel from './components/AdminPanel.tsx';
 import SnowEffect from './components/SnowEffect.tsx';
 import MaintenanceScreen from './components/MaintenanceScreen.tsx';
+import MigrationScreen from './components/MigrationScreen.tsx';
 import { LanguageProvider } from './LanguageContext.tsx';
 import { auth, db } from './firebase.ts';
 import { onAuthStateChanged } from "firebase/auth";
@@ -27,6 +28,9 @@ const AppContent: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [snowEnabled, setSnowEnabled] = useState(false);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
+  
+  // Migration Overlay State
+  const [showMigration, setShowMigration] = useState(true);
 
   const [storageStats, setStorageStats] = useState<StorageStats>(() => {
     try {
@@ -48,6 +52,16 @@ const AppContent: React.FC = () => {
       return () => unsub();
     } catch (e) { return () => {}; }
   }, []);
+  
+  // Re-lock migration screen if a non-privileged user logs in
+  useEffect(() => {
+      if (currentUser) {
+          const isPrivileged = currentUser.isAdmin || currentUser.isTester || currentUser.isOfficial;
+          if (!isPrivileged) {
+              setShowMigration(true);
+          }
+      }
+  }, [currentUser]);
 
   const handleFileUpload = (size: number, category: 'media' | 'files' | 'voice') => {
     if (typeof size !== 'number' || isNaN(size)) return;
@@ -170,11 +184,23 @@ const AppContent: React.FC = () => {
   if (isLoading) return <div className="h-[100dvh] w-full bg-tg-bg flex items-center justify-center text-white font-bold tracking-widest animate-pulse">LOADING...</div>;
 
   const isAdmin = currentUser?.isAdmin || currentUser?.email?.toLowerCase() === 'goh@gmail.com';
+  
+  // Maintenance check - but Migration Overlay takes precedence in visual order
   if (maintenanceMode && !isAdmin) return <LanguageProvider><MaintenanceScreen /></LanguageProvider>;
 
   return (
     <div className="flex w-full bg-tg-bg overflow-hidden relative" style={{ height: '100dvh' }}>
       {snowEnabled && <SnowEffect />}
+      
+      {/* Mandatory Migration Overlay */}
+      {showMigration && (
+          <MigrationScreen 
+            currentUser={currentUser}
+            onClose={() => setShowMigration(false)}
+            onLoginClick={() => setShowMigration(false)}
+          />
+      )}
+
       {screen === AppScreen.AUTH && <AuthScreen />}
       {screen === AppScreen.MAIN && currentUser && (
         <div className="w-full flex flex-col h-full relative z-10">
