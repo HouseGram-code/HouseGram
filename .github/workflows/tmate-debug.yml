@@ -1,4 +1,5 @@
-name: Debug with tmate
+
+name: Debug with tmate (24/7)
 
 on:
   workflow_dispatch:
@@ -7,11 +8,17 @@ jobs:
   debug:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
     - name: Setup tmate session
       uses: mxschmitt/action-tmate@v3
       with:
         limit-access-to-actor: true
         web: true
+        sudo: true
+
+    - name: Keep runner alive forever (24/7)
+      run: |
+        echo "✅ Rаннер активен 24/7. Нажми Cancel в GitHub Actions, чтобы остановить."
+        while true; do
+          echo "⏳ Раннер жив... $(date)"
+          sleep 300
+        done
