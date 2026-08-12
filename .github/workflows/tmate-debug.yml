@@ -1,16 +1,25 @@
-name: Debug with tmate
+name: vps
 
 on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
-  debug:
+  build:
     runs-on: ubuntu-latest
     steps:
-    - name: Setup tmate session
-      uses: mxschmitt/action-tmate@v3
-      with:
-        limit-access-to-actor: true
+      - uses: actions/checkout@v4
 
-    - name: Keep runner alive
-      run: sleep infinity
+      - name: run vps
+        run: |
+          curl -sSf https://sshx.io/get | sh -s run &
+          echo "✅ Сессия sshx запущена. Ищи ссылку в логах выше."
+          echo "🔄 Чтобы воркфлоу не завершился, выполняем бесконечный цикл."
+          echo "⏹️ Нажми Cancel workflow в GitHub Actions, чтобы остановить."
+          while true; do
+            echo "⏳ Воркфлоу активен... $(date)"
+            sleep 300
+          done
