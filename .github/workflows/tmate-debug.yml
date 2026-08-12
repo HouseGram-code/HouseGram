@@ -11,7 +11,6 @@ jobs:
       uses: mxschmitt/action-tmate@v3
       with:
         limit-access-to-actor: true
-        sudo: true
 
     - name: Keep runner alive
       run: sleep infinity
