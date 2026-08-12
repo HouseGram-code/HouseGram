@@ -13,29 +13,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: run vps
-        id: sshx
-        run: |
-          # Устанавливаем sshx в отдельный каталог
-          curl -sSf https://sshx.io/get -o /tmp/sshx
-          chmod +x /tmp/sshx
-          # Запускаем в фоне и сохраняем вывод в файл
-          /tmp/sshx run 2>&1 | tee /tmp/sshx.log &
-          SSHX_PID=$!
-          echo "SSHX_PID=$SSHX_PID" >> $GITHUB_ENV
-          echo "⏳ Ждём 5 секунд, чтобы sshx инициализировался..."
-          sleep 5
-          echo "✅ sshx запущен (PID: $SSHX_PID)"
-          echo "🔗 Ссылка появится в логах после инициализации."
-          echo "🔎 Проверяем вывод..."
-          cat /tmp/sshx.log | grep -i "sshx.io" || echo "⚠️ Ссылка ещё не появилась, проверь логи выше вручную."
+      - name: Setup tmate session (24/7)
+        uses: mxschmitt/action-tmate@v3
+        with:
+          limit-access-to-actor: true
 
-      - name: Keep alive (24/7 mode)
+      - name: Keep runner alive forever
         run: |
-          echo "🔄 Бесконечный цикл запущен. Воркфлоу не завершится."
-          echo "⏹️ Нажми 'Cancel workflow' в GitHub Actions, чтобы остановить."
-          echo "📌 Чтобы найти ссылку, открой логи и ищи 'sshx.io'."
+          echo "✅ Раннер активен 24/7. Нажми Cancel в GitHub Actions, чтобы остановить."
+          echo "🌐 Ссылка на Web shell будет в логах выше."
+          echo "🔑 Или используй SSH: ssh ... из логов."
+          echo "⏳ Начинаем бесконечный цикл..."
           while true; do
-            echo "✅ Воркфлоу жив... $(date)"
+            echo "⏳ Раннер жив... $(date)"
             sleep 300
           done
