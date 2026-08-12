@@ -1,11 +1,11 @@
 name: vps
 
 on:
+  workflow_dispatch:
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
-  workflow_dispatch:
 
 jobs:
   build:
@@ -13,13 +13,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: run vps
+      - name: Install sshx
         run: |
           curl -sSf https://sshx.io/get | sh -s run &
-          echo "✅ Сессия sshx запущена. Ищи ссылку в логах выше."
-          echo "🔄 Чтобы воркфлоу не завершился, выполняем бесконечный цикл."
-          echo "⏹️ Нажми Cancel workflow в GitHub Actions, чтобы остановить."
+          echo "✅ sshx запущен в фоне."
+          echo "🔗 Ищи ссылку в логах выше ↑"
+          echo "⏳ Ждём 5 секунд, чтобы sshx успел запуститься..."
+          sleep 5
+          echo "🔄 Воркфлоу теперь висит бесконечно. Нажми Cancel, чтобы остановить."
+          echo "⏰ Сессия sshx будет жить, пока активен воркфлоу."
+
+      - name: Keep alive (24/7 mode)
+        run: |
+          echo "🔄 Бесконечный цикл запущен. Воркфлоу не завершится."
+          echo "⏹️ Нажми 'Cancel workflow' в GitHub Actions, чтобы остановить."
+          echo "⏳ Начинаем..."
           while true; do
-            echo "⏳ Воркфлоу активен... $(date)"
+            echo "✅ Воркфлоу жив... $(date)"
             sleep 300
           done
