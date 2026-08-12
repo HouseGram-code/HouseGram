@@ -1,6 +1,6 @@
 # Opengram — применение исправлений (gateway-server + file-server)
 
-Сервер: **18.206.196.112**, Ubuntu 22.04, Docker, x86_64.
+Сервер: **57.151.128.85**, Ubuntu 22.04, Docker, x86_64.
 
 ## Что было исправлено
 
@@ -12,7 +12,7 @@
 2. **file-server** — тянулся как несуществующий образ
    `${MyTelegramRegistry}/mytelegram-file-server` (нет сборки под amd64 → exit 139).
    Теперь собирается локально из `file-server/` (Node.js), `platform: linux/amd64`.
-3. Создан полный **`.env`** со всеми переменными (IP 18.206.196.112).
+3. Создан полный **`.env`** со всеми переменными (IP 57.151.128.85).
 4. Добавлены `Dockerfile`, `server.js`, `package.json`, `appsettings.json` для file-server.
 
 ## Команды на сервере (из папки `docker/compose`)
